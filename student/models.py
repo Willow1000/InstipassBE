@@ -45,8 +45,6 @@ class Student(models.Model):
         return f"{self.institution}:{self.reg_no}"
 
 
-
-# models.py
 class SubmissionTracker(models.Model):
     student = models.ForeignKey(Student,on_delete = models.CASCADE,null=True,blank=True)
     institution = models.ForeignKey(Institution,on_delete=models.CASCADE,blank=True,null=True)
