@@ -59,7 +59,7 @@ class BlackListLog(models.Model):
 ]
 
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
-    # action = models.CharField(max_length=30)
+    action = models.CharField(max_length=15,null=True)
     admin = models.ForeignKey(User,on_delete = models.CASCADE,null=True,related_name="admin_blacklisting")
     victim = models.ForeignKey(User,on_delete = models.CASCADE,null=True,related_name="user_blacklisted")
     reason_category = models.CharField(max_length=20,choices=REASON_CATEGORY_CHOICES)

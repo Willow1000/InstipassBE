@@ -54,6 +54,7 @@ def request_magic_link(request):
     email = request.data.get("email")
     fingerprint = request.data.get("fingerprint")
     cookie_flag = request.COOKIES.get("login_form_submitted")
+    user = get_object_or_404(User,email=email)
     ip_address = get_client_ip(request)
     if (fingerprint and LoginTracker.objects.filter(fingerprint=fingerprint).count() >= 10) or LoginTracker.objects.filter(ip_address=ip_address).count() >= 10:
         response = Response({"detail": "Limit reached"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
@@ -83,6 +84,8 @@ def request_magic_link(request):
         return Response({"detail": "Limit Reached"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
     if not email:
         return Response({"detail": "email required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not user.is_active:
+        return Response({"detail": "Unauthorized kindly contact support"}, status=status.HTTP_401_UNAUTHORIZED)
    
     institution = get_object_or_404(Institution, email=email)
 
