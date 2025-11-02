@@ -10,9 +10,6 @@ from logs.models import AdminActionsLog
 from institution.models import DemoBooking, ContactUs
 
 
-
-
-
 @receiver(post_delete,sender=DemoBooking,dispatch_uid="demobooking_deleted")
 def delete_demobooking(sender,instance,**kwargs):
     request = get_current_request()

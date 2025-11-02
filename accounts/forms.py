@@ -9,6 +9,7 @@ from django import forms
 from django.utils.encoding import force_bytes
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
+
 class EmailBackend(ModelBackend):
     def authenticate(self, request, email=None, password=None, **kwargs):
         UserModel = get_user_model()
@@ -18,9 +19,6 @@ class EmailBackend(ModelBackend):
                 return user
         except UserModel.DoesNotExist:
             return None
-
-
-
 
 # Get the custom user model
 UserModel = get_user_model()

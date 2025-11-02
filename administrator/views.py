@@ -48,16 +48,13 @@ from InstiPass.export_service import ExportService
 from logs.models import ExportLog
 from institution.utils import generate_login_token
 
-# Create your views here.
-# class AdminHome()
-# from django.contrib.auth.views import LoginView
+
 from django.contrib.auth import authenticate,login
 from django.shortcuts import render,reverse
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from django.db.models import Q
 from django.utils import timezone
-# User = get_user_model()
 
 class AdminLogin(LoginView):
     template_name = "administrator/admin_login.html"

@@ -59,7 +59,7 @@ urlpatterns = [
     path("payments",PaymentView.as_view(),name="admin_payments_view"),
     path("verify/payment/<int:pk>/",verify_payment,name="admin_approve_payment"),
     path("reject/payment/<int:pk>/",reject_payment,name="admin_reject_payment"),
-    # path("transactions/<int:pk>",TransactionView.as_view(),name="admin_transaction_view"),
+
     path("clear/expired/student/tokens",clear_expired_student_registration_tokens),
     path("institution/login/token",InstitutionLoginToken.as_view(),name="institution_login_token_view"),
     path("clear/institution/login/token",clear_institution_login_token,name="clear_institution_login_token"),

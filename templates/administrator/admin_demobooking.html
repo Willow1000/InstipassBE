@@ -42,7 +42,7 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label text-muted small">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -79,10 +79,9 @@
                                 <option value="month">This Month</option>
                             </select>
                         </div>
-   
-                        <div class="col-md-1 d-flex align-items-end">
+                        <div class="col-md-2 d-flex align-items-end">
                             <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
-                               Clear
+                               Clear Filters
                             </button>
                         </div>
                     </div>
@@ -303,15 +302,17 @@
             const statusFilter = document.getElementById('statusFilter');
             const sizeFilter = document.getElementById('sizeFilter');
             const dateFilter = document.getElementById('dateFilter');
-            const perPageFilter = document.getElementById('perPageFilter');
             const tableBody = document.getElementById('aryEntriesTableBody');
             
             // Check if table body exists (in case there are no bookings)
-            if (!tableBody) return;
+            if (!tableBody) {
+                console.log('No table body found - no bookings to display');
+                return;
+            }
             
             const allRows = Array.from(tableBody.querySelectorAll('.entry-row'));
+            console.log(`Found ${allRows.length} rows to filter`);
             
-            let currentPage = 1;
             let filteredRows = [...allRows];
             
             // Update statistics based on filtered data
@@ -321,56 +322,69 @@
                 const completedCount = rows.filter(row => row.dataset.status === 'COMPLETED').length;
                 const totalCount = rows.length;
                 
-                document.getElementById('pendingCount').textContent = pendingCount;
-                document.getElementById('confirmedCount').textContent = cancelledCount;
-                document.getElementById('completedCount').textContent = completedCount;
-                document.getElementById('totalCount').textContent = totalCount;
+                // Update the statistics cards
+                const pendingElement = document.getElementById('pendingCount');
+                const cancelledElement = document.getElementById('confirmedCount'); // Note: This ID is confusing - it shows cancelled count
+                const completedElement = document.getElementById('completedCount');
+                const totalElement = document.getElementById('totalCount');
+                
+                if (pendingElement) pendingElement.textContent = pendingCount;
+                if (cancelledElement) cancelledElement.textContent = cancelledCount;
+                if (completedElement) completedElement.textContent = completedCount;
+                if (totalElement) totalElement.textContent = totalCount;
             }
             
             // Helper function to check if a date is within a range
             function isDateInRange(dateStr, rangeType) {
-                if (!dateStr || !rangeType) return true;
+                if (!dateStr || !rangeType || rangeType === '') return true;
                 
-                const rowDate = new Date(dateStr);
-                const today = new Date();
-                
-                switch (rangeType) {
-                    case 'today':
-                        const todayStart = new Date(today);
-                        todayStart.setHours(0, 0, 0, 0);
-                        const todayEnd = new Date(today);
-                        todayEnd.setHours(23, 59, 59, 999);
-                        return rowDate >= todayStart && rowDate <= todayEnd;
-                        
-                    case 'week':
-                        const weekStart = new Date(today);
-                        weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
-                        weekStart.setHours(0, 0, 0, 0);
-                        
-                        const weekEnd = new Date(weekStart);
-                        weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
-                        weekEnd.setHours(23, 59, 59, 999);
-                        
-                        return rowDate >= weekStart && rowDate <= weekEnd;
-                        
-                    case 'month':
-                        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                        monthEnd.setHours(23, 59, 59, 999);
-                        
-                        return rowDate >= monthStart && rowDate <= monthEnd;
-                        
-                    default:
-                        return true;
+                try {
+                    const rowDate = new Date(dateStr);
+                    const today = new Date();
+                    
+                    switch (rangeType) {
+                        case 'today':
+                            const todayStart = new Date(today);
+                            todayStart.setHours(0, 0, 0, 0);
+                            const todayEnd = new Date(today);
+                            todayEnd.setHours(23, 59, 59, 999);
+                            return rowDate >= todayStart && rowDate <= todayEnd;
+                            
+                        case 'week':
+                            const weekStart = new Date(today);
+                            weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+                            weekStart.setHours(0, 0, 0, 0);
+                            
+                            const weekEnd = new Date(weekStart);
+                            weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
+                            weekEnd.setHours(23, 59, 59, 999);
+                            
+                            return rowDate >= weekStart && rowDate <= weekEnd;
+                            
+                        case 'month':
+                            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                            const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                            monthEnd.setHours(23, 59, 59, 999);
+                            
+                            return rowDate >= monthStart && rowDate <= monthEnd;
+                            
+                        default:
+                            return true;
+                    }
+                } catch (error) {
+                    console.error('Error parsing date:', error);
+                    return true;
                 }
             }
             
             // Filter rows based on search and filter criteria
             function filterRows() {
-                const searchTerm = searchInput.value.toLowerCase();
+                const searchTerm = searchInput.value.toLowerCase().trim();
                 const statusValue = statusFilter.value;
                 const sizeValue = sizeFilter.value;
                 const dateValue = dateFilter.value;
+                
+                console.log('Filtering with:', { searchTerm, statusValue, sizeValue, dateValue });
                 
                 filteredRows = allRows.filter(row => {
                     // Search filter
@@ -391,51 +405,45 @@
                     // Size filter
                     const matchesSize = !sizeValue || row.dataset.size === sizeValue;
                     
-                    // Date filter
+                    // Date filter - using the scheduled date (data-date)
                     const matchesDate = isDateInRange(row.dataset.date, dateValue);
                     
                     return matchesSearch && matchesStatus && matchesSize && matchesDate;
                 });
                 
+                console.log(`Filtered to ${filteredRows.length} rows`);
                 updateStatistics(filteredRows);
-                currentPage = 1; // Reset to first page when filtering
                 displayRows();
             }
             
-            // Display rows with pagination
+            // Display all filtered rows (no pagination)
             function displayRows() {
-                const perPage = parseInt(perPageFilter.value);
-                const startIndex = (currentPage - 1) * perPage;
-                const endIndex = startIndex + perPage;
+                console.log(`Displaying all ${filteredRows.length} filtered rows`);
                 
-                // Hide all rows
-                allRows.forEach(row => row.style.display = 'none');
-                
-                // Show filtered rows for current page
-                filteredRows.slice(startIndex, endIndex).forEach(row => {
-                    row.style.display = '';
+                // Hide all rows first
+                allRows.forEach(row => {
+                    row.style.display = 'none';
                 });
                 
-                // Update pagination info
-                updatePaginationInfo();
+                // Show all filtered rows
+                filteredRows.forEach(row => {
+                    row.style.display = '';
+                });
             }
             
-            function updatePaginationInfo() {
-                const perPage = parseInt(perPageFilter.value);
-                const totalPages = Math.ceil(filteredRows.length / perPage);
-                // You can add more sophisticated pagination controls here if needed
-                console.log(`Showing ${Math.min(perPage, filteredRows.length)} of ${filteredRows.length} entries`);
+            // Event listeners for all filter inputs
+            if (searchInput) {
+                searchInput.addEventListener('input', filterRows);
             }
-            
-            // Event listeners
-            searchInput.addEventListener('input', filterRows);
-            statusFilter.addEventListener('change', filterRows);
-            sizeFilter.addEventListener('change', filterRows);
-            dateFilter.addEventListener('change', filterRows);
-            perPageFilter.addEventListener('change', () => {
-                currentPage = 1;
-                displayRows();
-            });
+            if (statusFilter) {
+                statusFilter.addEventListener('change', filterRows);
+            }
+            if (sizeFilter) {
+                sizeFilter.addEventListener('change', filterRows);
+            }
+            if (dateFilter) {
+                dateFilter.addEventListener('change', filterRows);
+            }
             
             // Initial display
             updateStatistics(allRows);
@@ -444,15 +452,27 @@
         
         // Clear filters function
         function clearFilters() {
-            document.getElementById('searchEntries').value = '';
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('sizeFilter').value = '';
-            document.getElementById('dateFilter').value = '';
-            document.getElementById('perPageFilter').value = '25';
+            console.log('Clearing all filters');
             
-            // Trigger filter update
-            const event = new Event('input');
-            document.getElementById('searchEntries').dispatchEvent(event);
+            const searchInput = document.getElementById('searchEntries');
+            const statusFilter = document.getElementById('statusFilter');
+            const sizeFilter = document.getElementById('sizeFilter');
+            const dateFilter = document.getElementById('dateFilter');
+            
+            if (searchInput) searchInput.value = '';
+            if (statusFilter) statusFilter.value = '';
+            if (sizeFilter) sizeFilter.value = '';
+            if (dateFilter) dateFilter.value = '';
+            
+            // Trigger filter update by simulating input event
+            if (searchInput) {
+                const event = new Event('input', { bubbles: true });
+                searchInput.dispatchEvent(event);
+            } else {
+                // If search input doesn't exist, call filterRows directly
+                const filterRowsFunction = new Function('filterRows()');
+                try { filterRowsFunction(); } catch(e) { location.reload(); }
+            }
         }
         
         // Refresh page function

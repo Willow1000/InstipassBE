@@ -4,15 +4,6 @@ from accounts.models import BannedIP
 from django.conf import settings
 from datetime import timedelta
 
-# Configure this ladder in settings for easy tuning
-# IPBAN_BAN_LADDER = [15, 60, 24*60]  # in minutes: 15m, 1h, 24h
-# IPBAN_PERMANENT_AFTER = 4  # ban_count threshold for permanent ban
-
-# from datetime import timedelta
-# from django.utils import timezone
-# from rest_framework.throttling import AnonRateThrottle
-# from django.conf import settings
-# from .models import BannedIP
 
 class EscalatingAnonThrottle(AnonRateThrottle):
     scope = "anon"
