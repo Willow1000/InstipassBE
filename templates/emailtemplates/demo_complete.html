@@ -1,0 +1,73 @@
+{% extends "base_email.html" %}
+
+{% block title %}InstiPass - Demo Session Completed{% endblock %}
+
+{% block header %}
+<img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+<h1>Demo Session Completed</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Thank You for Attending!</h2>
+
+<p>We hope you found the InstiPass demonstration insightful and informative.</p>
+
+<div class="update-container">
+    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+    <h3>What's Next?</h3>
+    <p>We've successfully completed your demo session. We're excited about the possibility of InstiPass helping you streamline your operations.</p>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ signup_link|default:'#' }}" class="cta-button text-dark">Start Your Free Trial</a>
+    <a href="{{ contact_link|default:'#' }}" class="cta-button secondary">Contact Sales</a>
+</div>
+
+<div class="divider"></div>
+
+<div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">💡</div>
+        <div>
+            <strong>Key Takeaways</strong>
+            <p>During the demo, we covered:</p>
+            <ul>
+                <li>How InstiPass simplifies visitor management.</li>
+                <li>Real-time tracking and reporting features.</li>
+                <li>Customizable access control and security protocols.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: flex-start;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">🔗</div>
+        <div>
+            <strong>Helpful Resources</strong>
+            <p>Here are some resources to help you get started:</p>
+            <ul>
+                <li><a href="{{ pricing_link|default:'#' }}">Pricing Plans</a></li>
+                <li><a href="{{ faq_link|default:'#' }}">Frequently Asked Questions</a></li>
+                <li><a href="{{ case_studies_link|default:'#' }}">Customer Case Studies</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="security-notice">
+    <h4>Questions or Need Further Assistance?</h4>
+    <p>Our team is here to help! Please don't hesitate to reply to this email or contact us directly at <a href="mailto:support@instipass.com">support@instipass.com</a>.</p>
+</div>
+
+<p>We look forward to partnering with you.</p>
+
+<p>Best regards,<br>
+The InstiPass Team</p>
+{% endblock %}
+
+{% block extra_styles %}
+.update-container {
+    background-color: #e8f5e9;
+    border: 1px solid #a5d6a7;
+}
+{% endblock %}
+

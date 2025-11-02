@@ -1,0 +1,1142 @@
+{% extends "base.html" %}
+{% block title %} Export Tool {% endblock %}
+{% block content %}
+{% include "admin_nav.html" %}
+
+<!-- Add CSRF token in a hidden div -->
+<div id="csrf-token" style="display: none;">{% csrf_token %}</div>
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 text-white mb-0">
+          <i class="fas fa-download text-primary me-2"></i>Data Export Tool
+        </h1>
+      </div>
+ 
+      <!-- Main Export Card -->
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <div class="d-flex align-items-center">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                     style="width: 50px; height: 50px; font-size: 20px;"
+                     role="img" 
+                     aria-label="Data Export Tool">
+                  <i class="fas fa-database" aria-hidden="true"></i>
+                </div>
+                <div>
+                  <h4 class="fw-medium mb-1">Export Data from Database</h4>
+                  <div class="mb-1">
+                    <span class="badge bg-info me-2" role="status">Dynamic Filters</span>
+                    <span class="badge bg-success me-2" role="status">Multiple Formats</span>
+                    <span class="badge bg-warning" role="status">Real-time Preview</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body pt-2">
+          <!-- Table Selection -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="table-select" class="form-label text-muted">
+                <i class="fas fa-table me-1"></i>Select Database Table
+              </label>
+              <select id="table-select" class="form-select bg-dark text-white border-secondary">
+                <option value="">-- Choose a table to export --</option>
+                {% for table in available_tables %}
+                <option value="{{ table.name }}" data-count="{{ table.total_records }}">
+                  {{ table.verbose_name }} ({{ table.total_records }} records)
+                </option>
+                {% endfor %}
+              </select>
+              <div class="form-text text-muted">Choose which table you want to export data from</div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-end h-100">
+                <div class="w-100">
+                  <div id="table-info" class="bg-dark text-white p-3 rounded border" style="display: none;">
+                    <small class="text-muted d-block">Selected Table:</small>
+                    <div class="fw-medium" id="selected-table-name">-</div>
+                    <small class="text-muted d-block mt-1">Total Records:</small>
+                    <div id="selected-table-count">-</div>
+                    <div id="table-capabilities" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Global Filters -->
+          <div id="global-filters" class="mb-4" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="text-muted mb-0">
+                <i class="fas fa-filter me-1"></i>Relationship Filters
+              </h6>
+              <button type="button" class="btn btn-sm btn-outline-warning" onclick="clearGlobalFilters()">
+                <i class="fas fa-times me-1"></i>Clear Relationship Filters
+              </button>
+            </div>
+            
+            <div class="bg-dark text-white p-3 rounded border">
+              <div class="row g-3">
+                <!-- Institution Filter -->
+                <div id="institution-filter-container" class="col-md-6" style="display: none;">
+                  <label for="global-institution-filter" class="form-label small mb-1">
+                    <i class="fas fa-university me-1"></i>Filter by Institution
+                  </label>
+                  <select id="global-institution-filter" class="form-select form-select-sm bg-dark text-white border-secondary" 
+                          onchange="updateGlobalFilter('institution', this.value)">
+                    <option value="">All Institutions</option>
+                    {% for institution in institutions %}
+                    <option value="{{ institution.id }}">{{ institution.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <!-- User Filter -->
+                <div id="user-filter-container" class="col-md-6" style="display: none;">
+                  <label for="global-user-filter" class="form-label small mb-1">
+                    <i class="fas fa-user me-1"></i>Filter by User/Admin
+                  </label>
+                  <select id="global-user-filter" class="form-select form-select-sm bg-dark text-white border-secondary" 
+                          onchange="updateGlobalFilter('user', this.value)">
+                    <option value="">All Users/Admins</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }} - {{ user.get_full_name|default:user.email }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="form-text text-muted">Filter by institution or user relationships. These filters only appear for tables that have these specific attributes.</div>
+          </div>
+
+          <!-- Loading Indicator for Schema -->
+          <div id="schema-loading" class="text-center py-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading table schema...</span>
+            </div>
+            <p class="text-muted mt-2">Loading table structure and columns...</p>
+          </div>
+
+          <!-- Column Selection Section -->
+          <div id="column-section" class="mb-4" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="text-muted mb-0">
+                <i class="fas fa-columns me-1"></i>Select Columns to Export
+              </h6>
+              <div>
+                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllColumns()">
+                  <i class="fas fa-check-square me-1"></i>Select All
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllColumns()">
+                  <i class="fas fa-square me-1"></i>Deselect All
+                </button>
+              </div>
+            </div>
+            
+            <div class="bg-dark text-white p-3 rounded border">
+              <div id="column-checkboxes" class="row">
+                <!-- Dynamic columns will be loaded here -->
+              </div>
+            </div>
+            <div class="form-text text-muted">Choose which columns to include in the export. All columns will be exported if none are selected.</div>
+          </div>
+
+          <!-- Filters Section -->
+          <div id="filter-section" class="mb-4" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="text-muted mb-0">
+                <i class="fas fa-filter me-1"></i>Table-specific Filters
+              </h6>
+              <button type="button" class="btn btn-sm btn-outline-warning" onclick="clearAllFilters()">
+                <i class="fas fa-times me-1"></i>Clear All Filters
+              </button>
+            </div>
+            
+            <div class="bg-dark text-white p-3 rounded border">
+              <div id="filter-container" class="row g-3">
+                <!-- Dynamic filters will be loaded here -->
+              </div>
+            </div>
+            <div class="form-text text-muted">Apply filters to export only specific data. Filters are applied with AND logic.</div>
+          </div>
+
+          <!-- Preview Section -->
+          <div id="preview-section" class="mb-4" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="text-muted mb-0">
+                <i class="fas fa-eye me-1"></i>Data Preview
+              </h6>
+              <button type="button" class="btn btn-sm btn-outline-info" onclick="loadPreview()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh Preview
+              </button>
+            </div>
+            
+            <div class="bg-dark text-white p-3 rounded border">
+              <div id="preview-loading" class="text-center py-3" style="display: none;">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                <span class="text-muted">Loading preview data...</span>
+              </div>
+              
+              <div id="preview-content">
+                <div class="table-responsive">
+                  <table class="table table-dark table-sm table-hover mb-0">
+                    <thead id="preview-headers">
+                      <!-- Dynamic headers -->
+                    </thead>
+                    <tbody id="preview-data">
+                      <!-- Dynamic data -->
+                    </tbody>
+                  </table>
+                </div>
+                <div class="mt-3 pt-3 border-top border-secondary">
+                  <small class="text-muted">
+                    <span id="preview-count">0</span> records shown (max 20) • 
+                    <span id="total-count">0</span> total records match your filters
+                  </small>
+                </div>
+              </div>
+              
+              <div id="preview-empty" class="text-center py-4" style="display: none;">
+                <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                <p class="text-muted mb-0">No data matches your current filters</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export Options -->
+          <div id="export-section" class="mb-4" style="display: none;">
+            <div class="row">
+              <div class="col-md-6">
+                <label for="format-select" class="form-label text-muted">
+                  <i class="fas fa-file-export me-1"></i>Export Format
+                </label>
+                <select id="format-select" class="form-select bg-dark text-white border-secondary">
+                  <option value="csv">CSV (Comma Separated Values)</option>
+                  <option value="excel">Excel (.xlsx)</option>
+                  <option value="json">JSON (JavaScript Object Notation)</option>
+                  <option value="pdf">PDF (Portable Document Format)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-end h-100">
+                  <button id="export-btn" class="btn btn-primary w-100" onclick="performExport()" disabled>
+                    <i class="fas fa-download me-2"></i>Export Data
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="form-text text-muted">
+              Choose the format for your exported data. Large datasets are recommended to be exported as CSV for better performance.
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Progress -->
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <div id="export-progress" class="text-center py-3" style="display: none;">
+            <div class="spinner-border text-primary me-2" role="status"></div>
+            <span class="text-muted">Preparing your export file... This may take a moment for large datasets.</span>
+          </div>
+          
+          <div id="export-error" class="alert alert-danger mt-3" style="display: none;">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="error-message"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Tips Card -->
+      <div class="card shadow-sm border-0 rounded-3 mt-4">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="text-muted mb-0">
+            <i class="fas fa-lightbulb me-1"></i>Export Tips
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-university text-info me-3 fa-lg"></i>
+                <div>
+                  <div class="fw-medium">Institution Filtering</div>
+                  <small class="text-muted">Available for tables with "institution" attribute</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-user text-success me-3 fa-lg"></i>
+                <div>
+                  <div class="fw-medium">User/Admin Filtering</div>
+                  <small class="text-muted">Available for tables with "user" or "admin" attribute</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-columns text-warning me-3 fa-lg"></i>
+                <div>
+                  <div class="fw-medium">Select Columns</div>
+                  <small class="text-muted">Choose only needed columns for faster exports</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-eye text-primary me-3 fa-lg"></i>
+                <div>
+                  <div class="fw-medium">Preview First</div>
+                  <small class="text-muted">Check preview to ensure you're exporting the right data</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+// Global variables
+let currentSchema = null;
+let currentFilters = {};
+let selectedColumns = [];
+let globalFilters = {
+    institution: '',
+    user: ''
+};
+
+// Date formatting helper - converts YYYY-MM-DD to YYYY/MM/DD
+function formatDateForBackend(dateString) {
+    if (!dateString) return '';
+    // HTML date inputs return YYYY-MM-DD, but backend expects YYYY/MM/DD
+    return dateString.replace(/-/g, '/');
+}
+
+// Fixed CSRF token function
+function getCSRFToken() {
+    // Try multiple methods to get CSRF token
+    let csrfToken = '';
+    
+    // Method 1: Check hidden div
+    const csrfDiv = document.getElementById('csrf-token');
+    if (csrfDiv) {
+        const input = csrfDiv.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (input) {
+            csrfToken = input.value;
+        }
+    }
+    
+    // Method 2: Check cookies
+    if (!csrfToken) {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        if (cookieValue) {
+            csrfToken = cookieValue;
+        }
+    }
+    
+    // Method 3: Check meta tag
+    if (!csrfToken) {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            csrfToken = metaTag.getAttribute('content');
+        }
+    }
+    
+    return csrfToken;
+}
+
+// Helper function to check if table has user/admin attribute
+function hasUserOrAdminAttribute(columns) {
+    return columns.some(col => col.name === 'user' || col.name === 'admin');
+}
+
+// Helper function to get the actual user/admin field name for a table
+function getUserFieldName(columns) {
+    if (columns.some(col => col.name === 'user')) return 'user';
+    if (columns.some(col => col.name === 'admin')) return 'admin';
+    return null;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Export Tool initialized');
+    
+    // Initialize table select
+    const tableSelect = document.getElementById('table-select');
+    tableSelect.addEventListener('change', function() {
+        const tableName = this.value;
+        if (tableName) {
+            loadTableSchema(tableName);
+        } else {
+            hideAllSections();
+            hideSection('global-filters');
+        }
+    });
+    
+    // Initialize format select
+    const formatSelect = document.getElementById('format-select');
+    formatSelect.addEventListener('change', updateExportButton);
+});
+
+function loadTableSchema(tableName) {
+    console.log('Loading schema for table:', tableName);
+    showSection('schema-loading');
+    hideAllSections();
+    hideSection('global-filters');
+    
+    // Use GET request for schema loading (no CSRF needed)
+    fetch(`/super/api/export/schema/?table=${encodeURIComponent(tableName)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Schema loaded:', data);
+            if (data.success) {
+                currentSchema = data.schema;
+                displayTableInfo();
+                setupGlobalFilters();
+                loadColumnSelection();
+                loadFilterControls();
+                showSection('column-section');
+                showSection('filter-section');
+                showSection('export-section');
+                loadPreview(); // Load initial preview
+            } else {
+                showError('Failed to load table schema: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error loading schema:', error);
+            showError('Error loading table schema: ' + error.message);
+        })
+        .finally(() => {
+            hideSection('schema-loading');
+        });
+}
+
+function displayTableInfo() {
+    if (!currentSchema) return;
+    
+    document.getElementById('selected-table-name').textContent = currentSchema.verbose_name;
+    document.getElementById('selected-table-count').textContent = currentSchema.total_records.toLocaleString() + ' records';
+    document.getElementById('table-info').style.display = 'block';
+}
+
+function setupGlobalFilters() {
+    if (!currentSchema || !currentSchema.columns) return;
+    
+    // Check if table has specific "institution" or "user"/"admin" attributes
+    const hasInstitutionAttribute = currentSchema.columns.some(col => 
+        col.name === 'institution'
+    );
+    
+    const hasUserOrAdminAttribute = currentSchema.columns.some(col => 
+        col.name === 'user' || col.name === 'admin'
+    );
+    
+    const userFieldName = getUserFieldName(currentSchema.columns);
+    
+    console.log('Table attributes check:', {
+        table: currentSchema.table,
+        hasInstitutionAttribute: hasInstitutionAttribute,
+        hasUserOrAdminAttribute: hasUserOrAdminAttribute,
+        userFieldName: userFieldName,
+        columns: currentSchema.columns.map(col => col.name)
+    });
+    
+    // Show/hide global filters section based on specific attributes
+    if (hasInstitutionAttribute || hasUserOrAdminAttribute) {
+        showSection('global-filters');
+        
+        // Show/hide individual filter containers based on specific attributes
+        if (hasInstitutionAttribute) {
+            showSection('institution-filter-container');
+        } else {
+            hideSection('institution-filter-container');
+        }
+        
+        if (hasUserOrAdminAttribute) {
+            showSection('user-filter-container');
+            // Update label to show which field is being used
+            const label = document.querySelector('#user-filter-container label');
+            if (label && userFieldName) {
+                label.innerHTML = `<i class="fas fa-user me-1"></i>Filter by ${userFieldName.charAt(0).toUpperCase() + userFieldName.slice(1)}`;
+            }
+        } else {
+            hideSection('user-filter-container');
+        }
+        
+        // Update capabilities display
+        const capabilities = [];
+        if (hasInstitutionAttribute) capabilities.push('Institution Filtering');
+        if (hasUserOrAdminAttribute) capabilities.push(`${userFieldName ? userFieldName.charAt(0).toUpperCase() + userFieldName.slice(1) : 'User'} Filtering`);
+        
+        document.getElementById('table-capabilities').innerHTML = `
+            <small class="text-muted d-block">Supported Filters:</small>
+            <div class="mt-1">
+                ${capabilities.map(cap => `<span class="badge bg-info me-1">${cap}</span>`).join('')}
+            </div>
+        `;
+    } else {
+        hideSection('global-filters');
+        document.getElementById('table-capabilities').innerHTML = `
+            <small class="text-muted d-block">Supported Filters:</small>
+            <div class="mt-1">
+                <span class="badge bg-secondary">No relationship filters</span>
+            </div>
+        `;
+    }
+}
+
+function loadColumnSelection() {
+    if (!currentSchema || !currentSchema.columns) return;
+    
+    const container = document.getElementById('column-checkboxes');
+    container.innerHTML = '';
+    
+    currentSchema.columns.forEach((column, index) => {
+        const colDiv = document.createElement('div');
+        colDiv.className = 'col-md-4 col-lg-3 mb-2';
+        colDiv.innerHTML = `
+            <div class="form-check">
+                <input class="form-check-input column-checkbox" type="checkbox" 
+                       value="${column.name}" id="col-${index}" checked
+                       onchange="updateColumnSelection()">
+                <label class="form-check-label small" for="col-${index}" 
+                       title="${column.verbose_name} (${column.type})">
+                    ${column.verbose_name}
+                    <small class="text-muted d-block">${column.name}</small>
+                </label>
+            </div>
+        `;
+        container.appendChild(colDiv);
+    });
+    
+    selectedColumns = currentSchema.columns.map(col => col.name);
+}
+
+function loadFilterControls() {
+    if (!currentSchema || !currentSchema.columns) return;
+    
+    const container = document.getElementById('filter-container');
+    container.innerHTML = '';
+    currentFilters = {};
+    
+    currentSchema.columns.forEach((column, index) => {
+        // Skip institution and user/admin fields as they're handled by global filters
+        if (column.name === 'institution' || column.name === 'user' || column.name === 'admin') {
+            return;
+        }
+        
+        const filterHtml = createFilterInput(column, index);
+        if (filterHtml) {
+            const filterDiv = document.createElement('div');
+            filterDiv.className = 'col-md-6 col-lg-4';
+            filterDiv.innerHTML = filterHtml;
+            container.appendChild(filterDiv);
+        }
+    });
+    
+    // Add info about global filters if applicable
+    const hasInstitutionAttribute = currentSchema.columns.some(col => col.name === 'institution');
+    const hasUserOrAdminAttribute = currentSchema.columns.some(col => col.name === 'user' || col.name === 'admin');
+    const userFieldName = getUserFieldName(currentSchema.columns);
+    
+    if (hasInstitutionAttribute || hasUserOrAdminAttribute) {
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'col-12 mb-3';
+        let infoText = '<i class="fas fa-info-circle me-1"></i> This table supports relationship filters. ';
+        
+        if (hasInstitutionAttribute && hasUserOrAdminAttribute) {
+            infoText += `Use the institution and ${userFieldName} filters above.`;
+        } else if (hasInstitutionAttribute) {
+            infoText += 'Use the institution filter above.';
+        } else if (hasUserOrAdminAttribute) {
+            infoText += `Use the ${userFieldName} filter above.`;
+        }
+        
+        infoDiv.innerHTML = `
+            <div class="alert alert-info py-2 mb-0">
+                <small>${infoText}</small>
+            </div>
+        `;
+        container.appendChild(infoDiv);
+    }
+}
+
+function createFilterInput(column, index) {
+    const label = `${column.verbose_name} (${column.name})`;
+    
+    switch(column.type) {
+        case 'text':
+        case 'email':
+        case 'url':
+            return `
+                <label for="filter-${index}" class="form-label small mb-1">${label}</label>
+                <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" 
+                       id="filter-${index}" placeholder="Contains..." 
+                       onchange="updateFilter('${column.name}', this.value)">
+            `;
+        
+        case 'number':
+            return `
+                <label class="form-label small mb-1">${label}</label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary" 
+                               placeholder="Min" onchange="updateRangeFilter('${column.name}', 'min', this.value)">
+                    </div>
+                    <div class="col-6">
+                        <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary" 
+                               placeholder="Max" onchange="updateRangeFilter('${column.name}', 'max', this.value)">
+                    </div>
+                </div>
+            `;
+        
+        case 'date':
+        case 'datetime':
+            return `
+                <label class="form-label small mb-1">${label}</label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <input type="date" class="form-control form-control-sm bg-dark text-white border-secondary" 
+                               onchange="updateRangeFilter('${column.name}', 'min', formatDateForBackend(this.value))">
+                    </div>
+                    <div class="col-6">
+                        <input type="date" class="form-control form-control-sm bg-dark text-white border-secondary" 
+                               onchange="updateRangeFilter('${column.name}', 'max', formatDateForBackend(this.value))">
+                    </div>
+                </div>
+            `;
+        
+        case 'boolean':
+            return `
+                <label for="filter-${index}" class="form-label small mb-1">${label}</label>
+                <select class="form-select form-select-sm bg-dark text-white border-secondary" 
+                        onchange="updateFilter('${column.name}', this.value)">
+                    <option value="">All</option>
+                    <option value="true">Yes/True</option>
+                    <option value="false">No/False</option>
+                </select>
+            `;
+        
+        default:
+            if (column.choices && column.choices.length > 0) {
+                let options = '<option value="">All</option>';
+                column.choices.forEach(choice => {
+                    options += `<option value="${choice.value}">${choice.label}</option>`;
+                });
+                
+                return `
+                    <label for="filter-${index}" class="form-label small mb-1">${label}</label>
+                    <select class="form-select form-select-sm bg-dark text-white border-secondary" 
+                            onchange="updateFilter('${column.name}', this.value)">
+                        ${options}
+                    </select>
+                `;
+            }
+            return null;
+    }
+}
+
+function updateGlobalFilter(type, value) {
+    globalFilters[type] = value;
+    schedulePreviewUpdate();
+}
+
+function updateFilter(fieldName, value) {
+    if (value) {
+        currentFilters[fieldName] = value;
+    } else {
+        delete currentFilters[fieldName];
+    }
+    schedulePreviewUpdate();
+}
+
+function updateRangeFilter(fieldName, type, value) {
+    const rangeKey = `${fieldName}_range`;
+    if (!currentFilters[rangeKey]) {
+        currentFilters[rangeKey] = {};
+    }
+    
+    if (value) {
+        currentFilters[rangeKey][type] = value;
+    } else {
+        delete currentFilters[rangeKey][type];
+        if (Object.keys(currentFilters[rangeKey]).length === 0) {
+            delete currentFilters[rangeKey];
+        }
+    }
+    schedulePreviewUpdate();
+}
+
+function updateColumnSelection() {
+    selectedColumns = Array.from(document.querySelectorAll('.column-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    schedulePreviewUpdate();
+}
+
+let previewTimeout;
+function schedulePreviewUpdate() {
+    clearTimeout(previewTimeout);
+    previewTimeout = setTimeout(loadPreview, 500);
+}
+
+function loadPreview() {
+    if (!currentSchema) return;
+    
+    showSection('preview-loading');
+    hideSection('preview-empty');
+    
+    // Combine global filters with current filters
+    const allFilters = {...currentFilters};
+    
+    // Add institution filter only if table has institution attribute and filter is set
+    if (globalFilters.institution) {
+        const hasInstitutionAttribute = currentSchema.columns.some(col => col.name === 'institution');
+        if (hasInstitutionAttribute) {
+            allFilters.institution = globalFilters.institution;
+        }
+    }
+    
+    // Add user filter only if table has user/admin attribute and filter is set
+    if (globalFilters.user) {
+        const hasUserOrAdminAttribute = currentSchema.columns.some(col => col.name === 'user' || col.name === 'admin');
+        if (hasUserOrAdminAttribute) {
+            const userFieldName = getUserFieldName(currentSchema.columns);
+            // Use the actual field name (user or admin) for the filter
+            allFilters[userFieldName] = globalFilters.user;
+        }
+    }
+    
+    const requestData = {
+        table: currentSchema.table,
+        columns: selectedColumns,
+        filters: allFilters,
+        limit: 20
+    };
+    
+    const csrfToken = getCSRFToken();
+    console.log('Preview request data:', requestData);
+    
+    fetch('/super/api/export/preview/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken || ''
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || `HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Preview response:', data);
+        if (data.success) {
+            displayPreview(data.preview, data.total_count, data.preview_count);
+            updateExportButton();
+        } else {
+            showError('Preview failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error loading preview:', error);
+        showError('Error loading preview: ' + error.message);
+    })
+    .finally(() => {
+        hideSection('preview-loading');
+        showSection('preview-section');
+    });
+}
+
+function displayPreview(data, totalCount, previewCount) {
+    const headersContainer = document.getElementById('preview-headers');
+    const dataContainer = document.getElementById('preview-data');
+    const previewContent = document.getElementById('preview-content');
+    const previewEmpty = document.getElementById('preview-empty');
+    
+    if (!data || data.length === 0) {
+        showSection('preview-empty');
+        hideSection('preview-content');
+        headersContainer.innerHTML = '';
+        dataContainer.innerHTML = '';
+        return;
+    }
+    
+    // Show content and hide empty message
+    showSection('preview-content');
+    hideSection('preview-empty');
+    
+    // Create headers
+    const headers = Object.keys(data[0]);
+    headersContainer.innerHTML = `<tr>${headers.map(h => `<th class="border-secondary">${h}</th>`).join('')}</tr>`;
+    
+    // Create data rows
+    dataContainer.innerHTML = data.map(row => 
+        `<tr>${headers.map(h => `<td class="border-secondary">${row[h] !== null && row[h] !== undefined ? row[h] : ''}</td>`).join('')}</tr>`
+    ).join('');
+    
+    document.getElementById('preview-count').textContent = previewCount;
+    document.getElementById('total-count').textContent = totalCount.toLocaleString();
+}
+
+function performExport() {
+    if (!currentSchema) return;
+    
+    showSection('export-progress');
+    hideSection('export-error');
+    document.getElementById('export-btn').disabled = true;
+    
+    const format = document.getElementById('format-select').value;
+    
+    // Combine global filters with current filters for export
+    const allFilters = {...currentFilters};
+    
+    // Add institution filter only if table has institution attribute and filter is set
+    if (globalFilters.institution) {
+        const hasInstitutionAttribute = currentSchema.columns.some(col => col.name === 'institution');
+        if (hasInstitutionAttribute) {
+            allFilters.institution = globalFilters.institution;
+        }
+    }
+    
+    // Add user filter only if table has user/admin attribute and filter is set
+    if (globalFilters.user) {
+        const hasUserOrAdminAttribute = currentSchema.columns.some(col => col.name === 'user' || col.name === 'admin');
+        if (hasUserOrAdminAttribute) {
+            const userFieldName = getUserFieldName(currentSchema.columns);
+            // Use the actual field name (user or admin) for the filter
+            allFilters[userFieldName] = globalFilters.user;
+        }
+    }
+    
+    const requestData = {
+        table: currentSchema.table,
+        columns: selectedColumns,
+        filters: allFilters,
+        format: format
+    };
+    
+    const csrfToken = getCSRFToken();
+    
+    console.log('Export request data:', requestData);
+    
+    fetch('/super/api/export/data/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken || ''
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || `Export failed with status: ${response.status}`) 
+            });
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${currentSchema.table}_${new Date().toISOString().split('T')[0]}.${getFileExtension(format)}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showSuccess('Export completed successfully!');
+    })
+    .catch(error => {
+        console.error('Export error:', error);
+        showError('Export failed: ' + error.message);
+    })
+    .finally(() => {
+        hideSection('export-progress');
+        document.getElementById('export-btn').disabled = false;
+    });
+}
+
+function getFileExtension(format) {
+    const extensions = { csv: 'csv', excel: 'xlsx', json: 'json', pdf: 'pdf' };
+    return extensions[format] || 'csv';
+}
+
+function updateExportButton() {
+    const btn = document.getElementById('export-btn');
+    btn.disabled = !currentSchema;
+}
+
+function selectAllColumns() {
+    document.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = true);
+    updateColumnSelection();
+}
+
+function deselectAllColumns() {
+    document.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = false);
+    updateColumnSelection();
+}
+
+function clearAllFilters() {
+    document.querySelectorAll('#filter-container input, #filter-container select').forEach(el => {
+        el.value = '';
+    });
+    currentFilters = {};
+    loadPreview();
+}
+
+function clearGlobalFilters() {
+    document.getElementById('global-institution-filter').value = '';
+    document.getElementById('global-user-filter').value = '';
+    globalFilters.institution = '';
+    globalFilters.user = '';
+    loadPreview();
+}
+
+function showSection(sectionId) {
+    const element = document.getElementById(sectionId);
+    if (element) element.style.display = 'block';
+}
+
+function hideSection(sectionId) {
+    const element = document.getElementById(sectionId);
+    if (element) element.style.display = 'none';
+}
+
+function hideAllSections() {
+    ['column-section', 'filter-section', 'preview-section', 'export-section', 'table-info'].forEach(hideSection);
+}
+
+function showError(message) {
+    const errorDiv = document.getElementById('export-error');
+    const errorMessage = document.getElementById('error-message');
+    if (errorDiv && errorMessage) {
+        errorMessage.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+    console.error('Error:', message);
+}
+
+function showSuccess(message) {
+    console.log('Success:', message);
+    
+    // Show a temporary success message
+    const successAlert = document.createElement('div');
+    successAlert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    successAlert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    successAlert.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(successAlert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (successAlert.parentNode) {
+            successAlert.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.form-check-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.border-secondary {
+    border-color: #6c757d !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.alert-info {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: rgba(13, 110, 253, 0.3);
+    color: #8bb8ff;
+}
+
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-color: rgba(25, 135, 84, 0.3);
+    color: #75b798;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.3);
+    color: #ea868f;
+}
+
+/* Custom scrollbar for dark theme */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #2d3748;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+/* Enhanced form styling for dark theme */
+.form-control.bg-dark:focus,
+.form-select.bg-dark:focus {
+    background-color: #2d3748 !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+}
+
+.form-control.bg-dark::placeholder {
+    color: #a0aec0;
+}
+
+/* Better button hover effects */
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+}
+
+.btn:active {
+    transform: translateY(0);
+    transition: all 0.1s ease;
+}
+
+/* Fade in animation for alerts */
+.fade.show {
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Custom badge colors */
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Enhanced card styling */
+.card {
+    background-color: #1a1d23;
+    border: 1px solid #343a40;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid #343a40;
+}
+
+.card-footer {
+    background-color: transparent;
+    border-top: 1px solid #343a40;
+}
+
+/* Dark theme improvements */
+.text-muted {
+    color: #adb5bd !important;
+}
+
+.bg-dark {
+    background-color: #212529 !important;
+}
+
+.border-secondary {
+    border-color: #495057 !important;
+}
+
+/* Responsive table improvements */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+</style>
+
+{% endblock %}

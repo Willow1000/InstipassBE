@@ -1,0 +1,73 @@
+{% extends 'auth.html' %}
+
+{% block title %}Password Reset Sent{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card border-0 shadow-lg rounded-4 p-0 w-100" style="max-width: 500px;">
+        {% if messages %}
+        <div class="card-body p-4 p-md-5">
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'danger' }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>{{ message.tags|capfirst }}!</strong> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    The user with that email does not exist
+                </div>
+            </div>
+            <div>
+                <a href="http://127.0.0.1:3000">Go Back Home</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="card-header bg-secondary-custom text-white text-center p-4 rounded-top-4">
+            <i class="bi bi-envelope-check fs-1 mb-2"></i>
+            <h3 class="mb-0">Password Reset Email Sent!</h3>
+        </div>
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="divider"></div>
+            </div>
+            
+            <div class="alert border-0 mb-4 bg-opacity-10 text-body" 
+                 style="background-color: rgba(var(--bs-success-rgb), 0.1);">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                We've sent you an email with instructions to reset your password.
+            </div>
+            
+            <p class="text-center mt-4 text-body">
+                Please check your inbox (and your spam folder just in case) for the reset link.
+            </p>
+            
+            <div class="d-flex justify-content-center mt-4">
+                <div class="spinner-grow text-secondary-custom spinner-grow-sm mx-1" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="spinner-grow text-secondary-custom spinner-grow-sm mx-1" role="status" style="animation-delay: 0.2s;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="spinner-grow text-secondary-custom spinner-grow-sm mx-1" role="status" style="animation-delay: 0.4s;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="http://127.0.0.1:3000/institution/login" class="btn btn-primary w-100 py-2">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Return to Login
+                </a>
+            </div>
+            
+            <div class="text-center mt-4">
+                <p class="text-muted small mb-0">Didn't receive the email?</p>
+                <a href="#" class="text-secondary-custom">Resend password reset email</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

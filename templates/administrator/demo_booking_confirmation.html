@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InstiPass Demo Booking Confirmation{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* InstiPass theme colors and styling from base template */
+        :root {
+            --primary: #2A9D8F;
+            --secondary: #1D3557;
+            --accent: #E76F51;
+            --warning: #F4A261;
+            --success: #4CAF50;
+        }
+        
+        /* Demo booking specific styles */
+        .booking-container {
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            background-color: #e8f5e9;
+            border: 1px solid #a5d6a7;
+        }
+        
+        .booking-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .demo-details {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .demo-detail-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .demo-detail-icon {
+            margin-right: 15px;
+            color: var(--primary);
+            font-size: 20px;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        /* FIXED: Calendar invite section styling */
+        .calendar-invite {
+            background-color: var(--primary);
+            color: black;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            /* display: block; /* Ensure it's visible */
+            /* visibility: visible; Explicitly set visibility */ 
+        }
+        
+        .calendar-invite h4 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .calendar-invite p {
+            color: white !important; /* Override the text-dark class */
+            margin-bottom: 15px;
+        }
+        
+        .calendar-invite .btn {
+            margin: 5px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+        }
+        
+        .calendar-invite .btn-primary {
+            background-color: white;
+            color: var(--primary);
+            border: 2px solid white;
+        }
+        
+        .calendar-invite .btn-primary:hover {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .calendar-invite .btn-secondary {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .calendar-invite .btn-secondary:hover {
+            background-color: white;
+            color: var(--primary);
+        }
+        
+        .preparation-list {
+            margin: 20px 0;
+            padding-left: 0;
+            list-style-type: none;
+        }
+        
+        .preparation-list li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .preparation-list li:before {
+            content: "✓";
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .reschedule-info {
+            background-color: #fff8e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid var(--warning);
+        }
+        
+        /* Email container styling for better visibility */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .email-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .email-logo {
+            margin-bottom: 15px;
+        }
+        
+        .email-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+        }
+        
+        .social-links {
+            margin: 15px 0;
+        }
+        
+        .social-links a {
+            margin: 0 10px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .divider {
+            height: 2px;
+            background-color: var(--primary);
+            margin: 30px 0;
+            opacity: 0.3;
+        }
+        
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            {% block header %}
+            <img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+            <h1>Your Demo Session is Confirmed!</h1>
+            {% endblock %}
+        </div>
+        
+        <div class="email-body">
+            <h2>Hello {{ user_name|default:"there" }},</h2>
+            
+            <p>Thank you for booking a demo session with InstiPass. We're excited to show you how our platform can benefit your institution.</p>
+            
+            <div class="booking-container">
+                <h3>Your Demo Session is Confirmed</h3>
+                <p>Booking reference: <strong>{{ booking_reference|default:"DEMO-" }}{{ booking_id|default:"12345" }}</strong></p>
+            </div>
+            
+            <div class="demo-details">
+                <h4>Demo Session Details</h4>
+                
+                <div class="demo-detail-item">
+                    <div class="demo-detail-icon">📆</div>
+                    <div>
+                        <strong>Date:</strong> {{ demo_date|default:"[Date will be displayed here]" }}
+                    </div>
+                </div>
+                
+                <div class="demo-detail-item">
+                    <div class="demo-detail-icon">⏰</div>
+                    <div>
+                        <strong>Time:</strong> {{ demo_time|default:"[Time will be displayed here]" }} ({{ timezone|default:"UTC" }})
+                    </div>
+                </div>
+                
+                <div class="demo-detail-item">
+                    <div class="demo-detail-icon">👨‍💼</div>
+                    <div>
+                        <strong>Presenter:</strong> {{ presenter_name|default:"An InstiPass Specialist" }}
+                    </div>
+                </div>
+                
+                <!-- <div class="demo-detail-item">
+                    <div class="demo-detail-icon">🖥️</div>
+                    <div>
+                        <strong>Platform:</strong> {{ platform|default:"Zoom Meeting" }}
+                        {% if meeting_link %}<br><a href="{{ meeting_link }}">{{ meeting_link }}</a>{% endif %}
+                        {% if meeting_id %}<br>Meeting ID: {{ meeting_id }}{% endif %}
+                        {% if passcode %}<br>Passcode: {{ passcode }}{% endif %}
+                    </div>
+                </div> -->
+            </div>
+            
+            <!-- FIXED: Calendar invite section with proper styling and visibility -->
+            <div class="calendar-invite">
+                <h4>📅 Add to Your Calendar</h4>
+                <p>Don't forget about your demo session - add it to your calendar now:</p>
+                <div>
+                    <a href="{{ calendar_link|default:'#' }}" class="btn btn-primary">📅 Add to Google Calendar</a>
+                    <a href="{{ ics_link|default:'#' }}" class="btn btn-secondary">📥 Download .ICS File</a>
+                </div>
+            </div>
+            
+            <h4>How to Prepare for Your Demo</h4>
+            <ul class="preparation-list">
+                <li>Ensure you have a stable internet connection</li>
+                <li>Prepare any specific questions you may have about InstiPass</li>
+                <li>Consider inviting colleagues who might benefit from the demo</li>
+                <li>Test your audio and video before the session</li>
+            </ul>
+            
+            <div class="reschedule-info">
+                <h4>Need to Reschedule?</h4>
+                <p>If you need to reschedule your demo session, please contact us at least 24 hours in advance at <a href="mailto:demos@instipass.com">demos@instipass.com</a> or call us at (555) 123-4567.</p>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p>We're looking forward to showing you how InstiPass can streamline your institution's ID management process.</p>
+            
+            <p>Best regards,<br>The InstiPass Team</p>
+        </div>
+        
+        <div class="email-footer">
+            {% block footer %}
+            <p>&copy; {% now "Y" %} InstiPass. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+            <p>If you have any questions before your demo, please contact our team at demos@instipass.com</p>
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,872 @@
+{% extends "base.html" %}
+{% block title %}{{ institution.name }} Institution Detail{% endblock %}
+{% block content %}
+{% include "admin_nav.html" %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ institution.name }} – Institution Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #0d47a1 0%, #002171 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .dashboard-title {
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+        
+        .stats-card {
+            background: #1e1e1e;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: none;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .stats-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #4dabf7, #9775fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stats-label {
+            color: #adb5bd;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Enhanced Section Cards with Distinctive Styling - Dark Mode */
+        .section-card {
+            background: #1e1e1e;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: none;
+            margin-bottom: 2rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 6px solid #4dabf7;
+        }
+        
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4dabf7, #339af0);
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+        
+        .section-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        }
+        
+        .section-title {
+            color: #4dabf7;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, #4dabf7, transparent);
+            margin-left: 1rem;
+        }
+        
+        /* Contact Information Styling */
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            background: #2d2d2d;
+            border-radius: 1rem;
+            margin-bottom: 1.25rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .contact-item:hover {
+            background: #333333;
+            transform: translateX(8px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .contact-icon {
+            font-size: 1.5rem;
+            color: #4dabf7;
+            margin-right: 1.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(77, 171, 247, 0.1);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-item:hover .contact-icon {
+            background: #4dabf7;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .contact-label {
+            font-weight: 600;
+            color: #e9ecef;
+            margin-right: 1rem;
+            min-width: 140px;
+            font-size: 1rem;
+        }
+        
+        .contact-value a {
+            color: #74c0fc;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-value a:hover {
+            color: #4dabf7;
+            text-decoration: underline;
+        }
+        
+        /* Institution Settings Styling */
+        .settings-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .settings-group {
+            background: #2d2d2d;
+            border-radius: 1.25rem;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-group:hover {
+            background: #333333;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        
+        .settings-group-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #4dabf7;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .settings-group-icon {
+            font-size: 1.4rem;
+            color: #4dabf7;
+            background: rgba(77, 171, 247, 0.15);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .settings-group:hover .settings-group-icon {
+            background: #4dabf7;
+            color: white;
+            transform: rotate(5deg) scale(1.05);
+        }
+        
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .settings-item:first-child {
+            padding-top: 0;
+        }
+        
+        .settings-label {
+            font-weight: 600;
+            color: #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+        }
+        
+        .settings-label-icon {
+            color: #4dabf7;
+            font-size: 1.1rem;
+        }
+        
+        .settings-value {
+            color: #f8f9fa;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .settings-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-enabled {
+            background: rgba(40, 167, 69, 0.15);
+            color: #51cf66;
+            border: 2px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .badge-disabled {
+            background: rgba(108, 117, 125, 0.15);
+            color: #adb5bd;
+            border: 2px solid rgba(108, 117, 125, 0.3);
+        }
+        
+        .badge-email {
+            background: rgba(77, 171, 247, 0.15);
+            color: #74c0fc;
+            border: 2px solid rgba(77, 171, 247, 0.3);
+        }
+        
+        .badge-sms {
+            background: rgba(77, 171, 247, 0.15);
+            color: #74c0fc;
+            border: 2px solid rgba(77, 171, 247, 0.3);
+        }
+        
+        .badge-both {
+            background: rgba(77, 171, 247, 0.15);
+            color: #74c0fc;
+            border: 2px solid rgba(77, 171, 247, 0.3);
+        }
+        
+        /* Template Section Styling */
+        .template-card {
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s ease;
+            background: #1e1e1e;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .template-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .template-header {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, rgba(77, 171, 247, 0.1) 0%, rgba(77, 171, 247, 0.05) 100%);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .template-title {
+            font-weight: 700;
+            color: #4dabf7;
+            margin: 0;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .template-preview {
+            padding: 2rem;
+            text-align: center;
+            background: #1e1e1e;
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .template-preview-item {
+            position: relative;
+        }
+        
+        .template-preview-label {
+            font-weight: 600;
+            color: #4dabf7;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .template-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s ease;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .template-preview img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .template-footer {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, rgba(77, 171, 247, 0.05) 0%, rgba(77, 171, 247, 0.02) 100%);
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .template-meta {
+            font-size: 0.9rem;
+            color: #adb5bd;
+            font-weight: 500;
+        }
+        
+        .template-actions a {
+            text-decoration: none;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: default;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #495057;
+            transition: .4s;
+            border-radius: 34px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #2b8a3e;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        .settings-timestamp {
+            font-size: 0.85rem;
+            color: #adb5bd;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-style: italic;
+        }
+        
+        .edit-button {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(77, 171, 247, 0.15);
+            color: #4dabf7;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .settings-group:hover .edit-button {
+            opacity: 1;
+        }
+        
+        .edit-button:hover {
+            background: #4dabf7;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .no-settings-alert {
+            background: linear-gradient(135deg, #e67700 0%, #f08c00 100%);
+            color: #f8f9fa;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 3rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .tooltip-icon {
+            color: #adb5bd;
+            cursor: help;
+            margin-left: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        /* View Students Button */
+        .view-students-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, #0d47a1 0%, #002171 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(13, 71, 161, 0.4);
+            font-size: 1.1rem;
+        }
+        
+        .view-students-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(13, 71, 161, 0.5);
+            color: white;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-title {
+                font-size: 2rem;
+            }
+            
+            .stats-number {
+                font-size: 2.5rem;
+            }
+            
+            .section-card {
+                padding: 1.5rem;
+            }
+            
+            .contact-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                text-align: left;
+            }
+            
+            .contact-label {
+                min-width: auto;
+            }
+            
+            .settings-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .settings-value {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .template-preview {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .template-header, .template-footer {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .template-actions {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-title::after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="dashboard-title">
+                        <i class="bi bi-building"></i> {{ institution.name }}
+                    </h1>
+                    <p class="dashboard-subtitle">Superuser Dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Statistics Section -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-number">{{ expected }}</div>
+                    <div class="stats-label"> Expected IDs</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-number">{{ total }}</div>
+                    <div class="stats-label">Registered</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-number">{{ ready }}</div>
+                    <div class="stats-label">IDs Ready</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Students Button -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <a href="{% url 'students_admin' %}?q={{ institution.email }}" class="view-students-btn">
+                    <i class="bi bi-people"></i>
+                    View All Students
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Contact Information Section -->
+            <div class="col-lg-6 mb-4">
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <i class="bi bi-telephone-fill"></i>
+                        Contact Information
+                    </h2>
+                    
+                    <div class="contact-item">
+                        <i class="bi bi-envelope-fill contact-icon"></i>
+                        <span class="contact-label">Primary Email:</span>
+                        <div class="contact-value">
+                            <a href="mailto:{{ institution.email }}">{{ institution.email }}</a>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="bi bi-telephone-fill contact-icon"></i>
+                        <span class="contact-label">Primary Phone:</span>
+                        <div class="contact-value">
+                            <a href="tel:{{ institution.tel }}">{{ institution.tel }}</a>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="bi bi-envelope-at-fill contact-icon"></i>
+                        <span class="contact-label">Admin Email:</span>
+                        <div class="contact-value">
+                            <a href="mailto:{{ institution.admin_email }}">{{ institution.admin_email }}</a>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="bi bi-telephone-plus-fill contact-icon"></i>
+                        <span class="contact-label">Admin Phone:</span>
+                        <div class="contact-value">
+                            <a href="tel:{{ institution.admin_tell }}">{{ institution.admin_tell }}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Institution Settings Section -->
+            <div class="col-lg-6 mb-4">
+                {% if settings %}
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <i class="bi bi-gear-fill"></i>
+                        Institution Settings
+                    </h2>
+                    
+                    <div class="settings-container">
+                        <!-- ID Features Group -->
+                        <div class="settings-group">
+                            <button class="edit-button" title="Edit Settings">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            
+                            <div class="settings-group-title">
+                                <span class="settings-group-icon"><i class="bi bi-credit-card-2-front-fill"></i></span>
+                                ID Card Features
+                            </div>
+                            
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <i class="bi bi-qr-code settings-label-icon"></i>
+                                    QR Code Generation
+                                    <i class="bi bi-info-circle tooltip-icon" title="Enable QR code on student IDs"></i>
+                                </div>
+                                <div class="settings-value">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" {% if settings.qrcode %}checked{% endif %} disabled>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="settings-badge {% if settings.qrcode %}badge-enabled{% else %}badge-disabled{% endif %}">
+                                        {% if settings.qrcode %}Enabled{% else %}Disabled{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <i class="bi bi-upc-scan settings-label-icon"></i>
+                                    Barcode Generation
+                                    <i class="bi bi-info-circle tooltip-icon" title="Enable barcode on student IDs"></i>
+                                </div>
+                                <div class="settings-value">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" {% if settings.barcode %}checked{% endif %} disabled>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="settings-badge {% if settings.barcode %}badge-enabled{% else %}badge-disabled{% endif %}">
+                                        {% if settings.barcode %}Enabled{% else %}Disabled{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Academic Settings Group -->
+                        <div class="settings-group">
+                            <button class="edit-button" title="Edit Settings">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            
+                            <div class="settings-group-title">
+                                <span class="settings-group-icon"><i class="bi bi-calendar3"></i></span>
+                                Academic Configuration
+                            </div>
+                            
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <i class="bi bi-calendar-date settings-label-icon"></i>
+                                    Minimum Admission Year
+                                    <i class="bi bi-info-circle tooltip-icon" title="Earliest allowed admission year for students"></i>
+                                </div>
+                                <div class="settings-value">
+                                    <span class="badge bg-primary">{{ settings.min_admission_year }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notification Settings Group -->
+                        <div class="settings-group">
+                            <button class="edit-button" title="Edit Settings">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            
+                            <div class="settings-group-title">
+                                <span class="settings-group-icon"><i class="bi bi-bell-fill"></i></span>
+                                Notification Preferences
+                            </div>
+                            
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <i class="bi bi-chat-left-text-fill settings-label-icon"></i>
+                                    Notification Method
+                                    <i class="bi bi-info-circle tooltip-icon" title="How notifications are delivered"></i>
+                                </div>
+                                <div class="settings-value">
+                                    {% if settings.notification_pref == 'email' %}
+                                    <span class="settings-badge badge-email">
+                                        <i class="bi bi-envelope-fill"></i> Email Only
+                                    </span>
+                                    {% elif settings.notification_pref == 'sms' %}
+                                    <span class="settings-badge badge-sms">
+                                        <i class="bi bi-chat-left-text-fill"></i> SMS Only
+                                    </span>
+                                    {% elif settings.notification_pref == 'both' %}
+                                    <span class="settings-badge badge-both">
+                                        <i class="bi bi-envelope-fill"></i>
+                                        <i class="bi bi-chat-left-text-fill"></i> Email & SMS
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="settings-timestamp">
+                                <i class="bi bi-clock"></i>
+                                Last updated: {{ settings.updated_at|date:"M d, Y \a\t H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <i class="bi bi-gear-fill"></i>
+                        Institution Settings
+                    </h2>
+                    <div class="alert no-settings-alert" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        No settings configured for this institution yet.
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Template Section -->
+        {% if settings.template_front %}
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <i class="bi bi-image-fill"></i>
+                        ID Card Templates
+                    </h2>
+                    
+                    <div class="template-card">
+                        <div class="template-header">
+                            <h5 class="template-title">
+                                <i class="bi bi-credit-card-2-front-fill"></i>
+                                Student ID Card Design
+                            </h5>
+                            <span class="badge bg-success">Active Template</span>
+                        </div>
+                        
+                        {% if settings.template_front.url %}
+                        <div class="template-preview">
+                            <div class="template-preview-item">
+                                <div class="template-preview-label">
+                                    <i class="bi bi-card-heading"></i> Front Side
+                                </div>
+                                <img src="{{ settings.template_front.url }}" alt="ID Card Front Template" class="img-fluid">
+                            </div>
+                            
+                            {% if settings.template_back.url %}
+                            <div class="template-preview-item">
+                                <div class="template-preview-label">
+                                    <i class="bi bi-card-text"></i> Back Side
+                                </div>
+                                <img src="{{ settings.template_back.url }}" alt="ID Card Back Template" class="img-fluid">
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="template-footer">
+                            <div class="template-meta">
+                                <i class="bi bi-calendar3"></i>
+                                Template uploaded: {{ settings.created_at|date:"M d, Y" }}
+                            </div>
+                        
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+{% endblock %}

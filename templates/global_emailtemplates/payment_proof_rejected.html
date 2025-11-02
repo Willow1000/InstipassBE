@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Proof Rejected - InstiPass</title>
+    <style>
+        /* InstiPass theme colors */
+        :root {
+            --primary: #2A9D8F;
+            --secondary: #1D3557;
+            --accent: #E76F51;
+            --warning: #F4A261;
+            --success: #4CAF50;
+        }
+        
+        /* Base styles that work across email clients */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333333;
+            background-color: #f5f5f5;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .email-header {
+            padding: 25px;
+            text-align: center;
+            background-color: #2A9D8F;
+            color: #ffffff;
+        }
+        
+        .email-logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .email-body {
+            padding: 30px 25px;
+            background-color: #ffffff;
+        }
+        
+        .email-footer {
+            padding: 20px 25px;
+            text-align: center;
+            background-color: #f0f0f0;
+            color: #666666;
+            font-size: 14px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: #2A9D8F;
+            color: white !important;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .cta-button:hover {
+            background-color: #238b7e;
+        }
+        
+        h1, h2, h3, h4 {
+            color: #1D3557;
+            margin-top: 0;
+        }
+        
+        p {
+            margin-bottom: 16px;
+        }
+        
+        .divider {
+            border-top: 1px solid #eeeeee;
+            margin: 25px 0;
+        }
+        
+        .social-links {
+            margin: 15px 0;
+        }
+        
+        .social-links a {
+            color: #2A9D8F;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        
+        .update-container {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            background-color: #ffebee;
+            border: 1px solid #ef9a9a;
+        }
+        
+        .security-notice {
+            background-color: #fff3e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .rejection-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .info-icon {
+            margin-right: 15px;
+            color: #E76F51;
+            font-size: 20px;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        .info-content {
+            flex: 1;
+        }
+        
+        .info-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .info-content li {
+            margin-bottom: 5px;
+        }
+        
+        .guidance-section {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        /* Responsive styles */
+        @media screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                border-radius: 0;
+            }
+            
+            .email-body {
+                padding: 20px 15px !important;
+            }
+            
+            .cta-button {
+                display: block !important;
+                width: 100% !important;
+                margin: 10px 0 !important;
+                box-sizing: border-box;
+            }
+            
+            .info-item {
+                flex-direction: column;
+            }
+            
+            .info-icon {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+            <h1>Payment Proof Rejected</h1>
+        </div>
+        
+        <div class="email-body">
+            <h2>Hello {{ institution_name|default:"Administrator" }},</h2>
+
+            <p>We regret to inform you that your payment proof submission has been rejected after review.</p>
+
+            <div class="update-container">
+                <div class="rejection-icon">❌</div>
+                <h3>Payment Proof Rejected</h3>
+                <p><strong>Status:</strong> Rejected</p>
+                {% if rejection_date %}<p><strong>Rejected On:</strong> {{ rejection_date }}</p>{% endif %}
+                {% if reference_number %}<p><strong>Reference Number:</strong> {{ reference_number }}</p>{% endif %}
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="guidance-section">
+                <div class="info-item">
+                    <div class="info-icon">📋</div>
+                    <div class="info-content">
+                        <strong>Common Reasons for Rejection</strong>
+                        <ul>
+                            <li>Document is unclear or unreadable</li>
+                            <li>Information does not match institution details</li>
+                            <li>Payment amount is incorrect</li>
+                            <li>Document appears to be altered or invalid</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">🔄</div>
+                    <div class="info-content">
+                        <strong>What to Do Next</strong>
+                        <p>Please upload a valid payment proof document. Ensure the document is clear, complete, and matches your institution's registration details.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-notice">
+                <h4>Need Assistance?</h4>
+                <p>If you believe this rejection was made in error or need clarification on the rejection reasons, please contact our support team. We're here to help you resolve this issue quickly.</p>
+            </div>
+
+            <p>If you have any questions or need further assistance, please don't hesitate to contact our support team at <a href="mailto:support@instipass.com" style="color: #2A9D8F;">support@instipass.com</a>.</p>
+
+            <p>Best regards,<br>
+            The InstiPass Team</p>
+        </div>
+        
+        <div class="email-footer">
+            <p>&copy; {% now "Y" %} InstiPass. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+            <p>This is an automated message, please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

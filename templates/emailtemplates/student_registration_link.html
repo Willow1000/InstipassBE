@@ -1,0 +1,37 @@
+{% extends "base_email.html" %}
+
+{% block title %}Student Registration Link - InstiPass{% endblock %}
+
+{% block header %}
+<img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+<h1>Student Registration Link</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Hello {{ institution_name }},</h2>
+
+<p>Here is the student registration link for your institution. Please share this link with your students so they can register for their IDs.</p>
+
+<div class="update-container" style="background-color: #e3f2fd; border: 1px solid #90caf9; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+    <div style="font-size: 48px; margin-bottom: 15px;">🔗</div>
+    <h3>Your Unique Registration Link</h3>
+    <p>Click the button below to access the registration page:</p>
+    <div class="action-buttons">
+       {{ registration_link }}
+    </div>
+    <p style="font-size: 12px; color: #777777; margin-top: 15px;"><strong>Disclaimer:</strong> A device can only register one student.</p>
+    <p style="font-size: 12px; color: #777777;">This link is valid for {{ lifetime }} hours and expires on {{ expiry_date }}.</p>
+</div>
+
+<div class="security-notice">
+    <h4>Important Notice</h4>
+    <p>Please ensure this link is shared only with your students. If you have any concerns about the security of this link, please contact our support team immediately.</p>
+</div>
+
+<p>If you have any questions or need further assistance, please don't hesitate to contact our support team at <a href="mailto:support@instipass.com" style="color: #2A9D8F;">support@instipass.com</a>.</p>
+
+<p>Best regards,<br>
+The InstiPass Team</p>
+{% endblock %}
+
+

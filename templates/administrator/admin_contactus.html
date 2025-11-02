@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+{% block title %} ContactUs Messages {% endblock %}
+{% block content %}
+{% include "admin_nav.html" %}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 text-white mb-0">
+          <i class="fas fa-comments text-primary me-2"></i>Contact Us
+        </h1>
+        <div class="d-flex gap-2">
+          <span class="badge bg-primary fs-6 py-2 px-3">Total: <span id="totalCount">{{ messages|length }}</span></span>
+          <span class="badge bg-warning fs-6 py-2 px-3">Unread: <span id="unreadCount">{{ messages|length }}</span></span>
+        </div>
+      </div>
+
+      <!-- Filters and Search -->
+      <div class="card shadow-sm mb-4 border-0 rounded-3">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small text-muted">Search Messages</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0" id="searchMessages" placeholder="Search by name or message content...">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small text-muted">Filter Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="all">All Messages</option>
+                <option value="unread">Unread Only</option>
+                <option value="read">Read Only</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small text-muted">Sort By</label>
+              <select class="form-select" id="sortBy">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name">Sort by Name</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small text-muted">&nbsp;</label>
+              <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                <i class="fas fa-undo me-2"></i> Reset Filters
+              </button>
+           
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if messages %}
+        <!-- Bulk Actions -->
+        <div class="card shadow-sm mb-3 border-0 rounded-3 d-flex justify-content-between flex-row" id="bulkActions" style="display: none;">
+          <div class="card-body py-2 d-flex">
+            <div class="d-flex align-items-center gap-3">
+              <span class="text-muted">Selected: <span id="selectedCount" class="fw-bold">0</span></span>
+               
+              <button class="btn btn-sm btn-success" onclick="markSelectedAsRead()">
+                <i class="fas fa-check me-1"></i> Mark as Read
+              </button>
+            </div>
+          </div>
+          <div class="">
+                <a href="/super/clear/messages">
+                  <button class="btn btn-outline-danger  w-100">
+                   clear all
+                                </button>
+                </a>
+            </div>
+        </div>
+
+        <!-- Unread Messages Section -->
+        <h5 class="text-dark mb-3 mt-4">
+          <i class="fas fa-envelope text-primary me-2"></i>Unread Messages
+          <span class="badge bg-primary ms-2" id="unreadMessagesCount">{{ messages|length }}</span>
+        </h5>
+        <div id="unreadMessagesList">
+          {% for message in messages %}
+            <div class="card shadow-sm mb-3 message-card unread-message border-start border-primary border-3" 
+                 data-read="false"
+                 data-name="{{ message.name|lower }}"
+                 data-email="{{ message.email|lower }}"
+                 data-message="{{ message.message|lower }}"
+                 data-date="{{ message.created_at|date:'Y-m-d H:i:s' }}"
+                 data-id="{{ message.id }}">
+              
+              <div class="card-header bg-transparent border-0 pb-0">
+                <div class="row align-items-center">
+                  <div class="col">
+                    <!-- <div class="form-check">
+                      <input class="form-check-input message-checkbox" type="checkbox" 
+                             value="{{ message.id }}" onchange="updateBulkActions()">
+                      <label class="form-check-label fw-medium">{{ message.name }}</label>
+                    </div> -->
+                  </div>
+                  <div class="col-auto">
+                    <span class="badge bg-primary">New</span>
+                  </div>
+                </div>
+              </div>
+
+              
+                <div class="card-body pt-2">
+                  <div class="row">
+                    <div class="col-md-9">
+                      <div class="d-flex align-items-start gap-3 flex-column">
+                        <div class="flex-shrink-0">
+                          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                               style="width: 40px; height: 40px; font-size: 16px;">
+                            {{ message.name|first|upper }}
+                          </div>
+                          <div class="mb-1 mt-3">
+                              <i class="fas fa-envelope text-muted me-1"></i>
+                              <a href="mailto:{{ message.email }}" class="text-decoration-none">
+                                  {{ message.email }}
+                              </a>
+                          </div>
+                        </div>
+                        <div class="flex-grow-1">
+                          <div class="message-preview">
+                            <p class="card-text mb-0" style="line-height: 1.5;">
+                              {{ message.message|truncatewords:30 }}
+                              {% if message.message|wordcount > 30 %}
+                                <button class="btn btn-link p-0 text-primary fw-normal" onclick="toggleFullMessage(this)">
+                                  Show more
+                                </button>
+                              {% endif %}
+                            </p>
+                            {% if message.message|wordcount > 30 %}
+                              <div class="full-message" style="display: none;">
+                                <p class="card-text mt-2" style="white-space: pre-line;">{{ message.message }}</p>
+                                <button class="btn btn-link p-0 text-primary fw-normal" onclick="toggleFullMessage(this)">
+                                  Show less
+                                </button>
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+          
+                  <div class="col-md-3 text-md-end">
+                    <small class="text-muted d-block mb-2">
+                      <i class="fas fa-clock me-1"></i>
+                      {{ message.created_at|date:"M d, Y" }} at {{ message.created_at|date:"g:i A" }}
+                    </small>
+                    
+                    <div class="d-flex justify-content-md-end gap-2 mt-2">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Read Messages Section -->
+        <h5 class="text-dark mb-3 mt-4">
+          <i class="fas fa-check-circle text-success me-2"></i>Read Messages
+          <span class="badge bg-success ms-2" id="readMessagesCount">0</span>
+        </h5>
+        <div id="readMessagesList">
+          <!-- Read messages will be moved here via JavaScript -->
+        </div>
+
+        <!-- No results message -->
+        <div id="noResults" class="text-center py-5" style="display: none;">
+          <div class="text-muted">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <h4>No messages found</h4>
+            <p>Try adjusting your search criteria or filters.</p>
+          </div>
+        </div>
+
+      {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-5">
+          <div class="text-muted">
+            <i class="fas fa-inbox fa-4x mb-4"></i>
+            <h3>No Messages Yet</h3>
+            <p class="lead">When clients send messages through the contact form, they'll appear here.</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Initialize local storage for read messages if not exists
+if (!localStorage.getItem('readMessages')) {
+  localStorage.setItem('readMessages', JSON.stringify([]));
+}
+
+// On page load, apply read status from local storage
+document.addEventListener('DOMContentLoaded', function() {
+  applyReadStatusFromStorage();
+  updateCounters();
+  sortMessages();
+});
+
+// Apply read status from local storage
+function applyReadStatusFromStorage() {
+  const readMessages = JSON.parse(localStorage.getItem('readMessages')) || [];
+  const messageCards = document.querySelectorAll('.message-card');
+  // const detailLinks = document.querySelector(".detail-link")
+  // console.log(`Children: ${detailLinks.firstElementChild}`)
+
+
+
+  messageCards.forEach(card => {
+    const messageId = card.dataset.id;
+
+    if (readMessages.includes(messageId.toString())) {
+      markAsRead(card, false); // false means don't update storage again
+    }
+    card.addEventListener("click",()=>{
+      markAsRead(card,true)
+      window.location.href = `/super/message/${messageId}`
+    })
+  });
+}
+
+
+// Mark message as read
+function markAsRead(messageCard, updateStorage) {
+  const messageId = messageCard.dataset.id;
+  messageCard.dataset.read = 'true';
+  
+  // Move to read messages section
+  document.getElementById('readMessagesList').appendChild(messageCard);
+  
+  // Apply visual changes
+  messageCard.classList.remove('unread-message', 'border-primary', 'border-3');
+  messageCard.classList.add('read-message', 'opacity-75');
+  
+  // Update badge
+  const badge = messageCard.querySelector('.badge');
+  if (badge) {
+    badge.classList.remove('bg-primary');
+    badge.classList.add('bg-success');
+    badge.textContent = 'Read';
+  }
+  
+  // Check the toggle
+  // const toggle = messageCard.querySelector('.read-toggle');
+  // if (toggle) {
+  //   toggle.checked = true;
+  // }
+  
+  // Update storage if needed
+  if (updateStorage) {
+    const readMessages = JSON.parse(localStorage.getItem('readMessages')) || [];
+    if (!readMessages.includes(messageId.toString())) {
+      readMessages.push(messageId.toString());
+      localStorage.setItem('readMessages', JSON.stringify(readMessages));
+    }
+  }
+}
+
+// Mark message as unread
+
+
+//   // Update storage if needed
+//   if (updateStorage) {
+//     const readMessages = JSON.parse(localStorage.getItem('readMessages')) || [];
+//     const index = readMessages.indexOf(messageId.toString());
+//     if (index > -1) {
+//       readMessages.splice(index, 1);
+//       localStorage.setItem('readMessages', JSON.stringify(readMessages));
+//     }
+//   }
+// }
+
+// Update counters
+function updateCounters() {
+  const totalMessages = document.querySelectorAll('.message-card').length;
+  const readMessages = document.querySelectorAll('.message-card[data-read="true"]').length;
+  const unreadMessages = totalMessages - readMessages;
+  
+  document.getElementById('totalCount').textContent = totalMessages;
+  document.getElementById('unreadCount').textContent = unreadMessages;
+  document.getElementById('unreadMessagesCount').textContent = unreadMessages;
+  document.getElementById('readMessagesCount').textContent = readMessages;
+  
+  // Show/hide sections based on counts
+  const unreadSection = document.querySelector('h5:contains("Unread Messages")');
+  const readSection = document.querySelector('h5:contains("Read Messages")');
+  
+  if (unreadSection && unreadMessages === 0) {
+    unreadSection.style.display = 'none';
+  } else if (unreadSection) {
+    unreadSection.style.display = 'block';
+  }
+  
+  if (readSection && readMessages === 0) {
+    readSection.style.display = 'none';
+  } else if (readSection) {
+    readSection.style.display = 'block';
+  }
+}
+
+// Search and filter functionality
+document.getElementById('searchMessages').addEventListener('input', filterMessages);
+document.getElementById('statusFilter').addEventListener('change', filterMessages);
+document.getElementById('sortBy').addEventListener('change', sortMessages);
+
+function filterMessages() {
+  const searchTerm = document.getElementById('searchMessages').value.toLowerCase();
+  const statusFilter = document.getElementById('statusFilter').value;
+  const messages = document.querySelectorAll('.message-card');
+  let visibleCount = 0;
+
+  messages.forEach(message => {
+    const name = message.dataset.name;
+    const messageText = message.dataset.message;
+    const isRead = message.dataset.read === 'true';
+    
+    const matchesSearch = name.includes(searchTerm) || messageText.includes(searchTerm);
+    
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'read' && isRead) || 
+                         (statusFilter === 'unread' && !isRead);
+    
+    if (matchesSearch && matchesStatus) {
+      message.style.display = 'block';
+      visibleCount++;
+    } else {
+      message.style.display = 'none';
+    }
+  });
+
+  document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+}
+
+function sortMessages() {
+  const sortBy = document.getElementById('sortBy').value;
+  const unreadContainer = document.getElementById('unreadMessagesList');
+  const readContainer = document.getElementById('readMessagesList');
+  
+  // Sort unread messages
+  const unreadMessages = Array.from(unreadContainer.querySelectorAll('.message-card'));
+  sortMessageArray(unreadMessages, sortBy).forEach(message => unreadContainer.appendChild(message));
+  
+  // Sort read messages
+  const readMessages = Array.from(readContainer.querySelectorAll('.message-card'));
+  sortMessageArray(readMessages, sortBy).forEach(message => readContainer.appendChild(message));
+}
+
+function sortMessageArray(messages, sortBy) {
+  return messages.sort((a, b) => {
+    switch(sortBy) {
+      case 'newest':
+        return new Date(b.dataset.date) - new Date(a.dataset.date);
+      case 'oldest':
+        return new Date(a.dataset.date) - new Date(b.dataset.date);
+      case 'name':
+        return a.dataset.name.localeCompare(b.dataset.name);
+      default:
+        return 0;
+    }
+  });
+}
+
+function clearFilters() {
+  document.getElementById('searchMessages').value = '';
+  document.getElementById('statusFilter').value = 'all';
+  document.getElementById('sortBy').value = 'newest';
+  filterMessages();
+  sortMessages();
+}
+
+// Bulk actions
+// function updateBulkActions() {
+//   const checkboxes = document.querySelectorAll('.message-checkbox:checked');
+//   const bulkActions = document.getElementById('bulkActions');
+//   const selectedCount = document.getElementById('selectedCount');
+  
+//   selectedCount.textContent = checkboxes.length;
+//   bulkActions.style.display = checkboxes.length > 0 ? 'block' : 'none';
+// }
+
+// function markSelectedAsRead() {
+//   const selected = document.querySelectorAll('.message-checkbox:checked');
+//   if (selected.length === 0) return;
+  
+//   selected.forEach(checkbox => {
+//     const messageCard = checkbox.closest('.message-card');
+//     markAsRead(messageCard, true);
+//     checkbox.checked = false;
+//   });
+  
+//   updateBulkActions();
+//   updateCounters();
+// }
+
+// function deleteSelected() {
+//   const selected = document.querySelectorAll('.message-checkbox:checked');
+//   if (selected.length === 0) return;
+  
+//   if (confirm(`Are you sure you want to delete ${selected.length} messages?`)) {
+//     selected.forEach(checkbox => {
+//       const messageCard = checkbox.closest('.message-card');
+//       const messageId = messageCard.dataset.id;
+      
+//       // Remove from storage if it was read
+//       const readMessages = JSON.parse(localStorage.getItem('readMessages')) || [];
+//       const index = readMessages.indexOf(messageId.toString());
+//       if (index > -1) {
+//         readMessages.splice(index, 1);
+//         localStorage.setItem('readMessages', JSON.stringify(readMessages));
+//       }
+      
+//       // Remove from DOM
+//       messageCard.remove();
+//     });
+    
+//     updateBulkActions();
+//     updateCounters();
+//   }
+// }
+
+// Toggle full message view
+function toggleFullMessage(button) {
+  const messageCard = button.closest('.message-card');
+  const preview = messageCard.querySelector('.message-preview p');
+  const fullMessage = messageCard.querySelector('.full-message');
+  
+  if (fullMessage.style.display === 'none') {
+    preview.style.display = 'none';
+    fullMessage.style.display = 'block';
+  } else {
+    preview.style.display = 'block';
+    fullMessage.style.display = 'none';
+  }
+}
+
+// Helper function for querySelector with :contains
+document.querySelector = (function(querySelector) {
+  return function(selector) {
+    if (selector.includes(':contains')) {
+      const parts = selector.split(':contains');
+      const tag = parts[0];
+      const text = parts[1].replace(/['"()]/g, '');
+      
+      const elements = document.querySelectorAll(tag);
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].textContent.includes(text)) {
+          return elements[i];
+        }
+      }
+      return null;
+    }
+    return querySelector.call(this, selector);
+  };
+})(document.querySelector);
+</script>
+
+<style>
+:root {
+  --primary-color: #0d6efd;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+  --gray-color: #6c757d;
+  --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --hover-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --transition-speed: 0.3s;
+}
+
+.message-card {
+  transition: all var(--transition-speed) ease;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.message-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hover-shadow);
+}
+
+.message-card.border-primary {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.read-message {
+  opacity: 0.75;
+  transition: opacity var(--transition-speed) ease;
+}
+
+.read-message:hover {
+  opacity: 0.9;
+}
+
+.form-check-input:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.card-header .form-check {
+  margin: 0;
+}
+
+.message-preview {
+  max-height: none;
+  overflow: visible;
+}
+
+.form-check-input.read-toggle {
+  cursor: pointer;
+}
+
+.badge {
+  font-weight: 500;
+}
+
+h5 i {
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .col-md-3.text-md-end {
+    text-align: left !important;
+    margin-top: 1rem;
+  }
+  
+  .d-flex.justify-content-md-end {
+    justify-content: flex-start !important;
+  }
+}
+</style>
+{% endblock %}

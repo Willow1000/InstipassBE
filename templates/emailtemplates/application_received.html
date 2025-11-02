@@ -1,0 +1,68 @@
+{% extends "base_email.html" %}
+
+{% block title %}InstiPass - Application Received{% endblock %}
+
+{% block header %}
+<img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+<h1>Application Received</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Thank You for Your Application</h2>
+
+<p>We have successfully received your application to InstiPass.</p>
+
+<div class="update-container">
+    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+    <h3>Application Status</h3>
+    <p><strong>Status:</strong> Application Received</p>
+    {% if first_name and last_name %}
+    <p><strong>Name:</strong> {{ first_name }} {{ last_name }}</p>
+    {% endif %}
+    {% if application_id %}
+    <p><strong>Application ID:</strong> {{ application_id }}</p>
+    {% endif %}
+    <p><strong>Submission Date:</strong> {{ submission_date }}</p>
+</div>
+
+<div class="action-buttons">
+    <a href="#" class="cta-button">Track Application Status</a>
+</div>
+
+<div class="divider"></div>
+
+<div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">⏱️</div>
+        <div>
+            <strong>Processing Time</strong>
+            <p>Your application is now in our processing queue and will be reviewed shortly.</p>
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: flex-start;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">📱</div>
+        <div>
+            <strong>Stay Updated</strong>
+            <p>You will receive email notifications as your application progresses.</p>
+        </div>
+    </div>
+</div>
+
+<div class="security-notice">
+    <h4>Need Help?</h4>
+    <p>If you have any questions about your application, please contact our support team at <a href="mailto:support@instipass.com">support@instipass.com</a>.</p>
+</div>
+
+<p>Thank you for choosing InstiPass. We're working to process your application as quickly as possible.</p>
+
+<p>Best regards,<br>
+The InstiPass Team</p>
+{% endblock %}
+
+{% block extra_styles %}
+.update-container {
+    background-color: #e8f5e9;
+    border: 1px solid #a5d6a7;
+}
+{% endblock %}

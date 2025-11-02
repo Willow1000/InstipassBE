@@ -1,0 +1,980 @@
+{% extends "base.html" %}
+{% block title %}{{ institution.name }} Students{% endblock %}
+{% block content %}
+{% include "admin_nav.html" %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #0d47a1 0%, #002171 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .page-title {
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .page-subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: 0;
+        }
+        
+        .students-card {
+            background: #1e1e1e;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border: none;
+            overflow: hidden;
+        }
+        
+        .students-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .students-card-header {
+            background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+            color: white;
+            padding: 1.5rem;
+            border: none;
+        }
+        
+        .students-card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .students-table {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        .students-table thead th {
+            background: #2d2d2d;
+            color: #e0e0e0;
+            font-weight: 600;
+            border: none;
+            padding: 1rem 0.75rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .students-table tbody tr {
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .students-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.001);
+        }
+        
+        .students-table tbody td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #333333;
+            color: #e0e0e0;
+        }
+        
+        .student-id {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #2d2d2d;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #e0e0e0;
+        }
+        
+        .student-name {
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        
+        .student-email {
+            color: #a0a0a0;
+            font-size: 0.85rem;
+        }
+        
+        .student-phone {
+            color: #a0a0a0;
+            font-size: 0.85rem;
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-ready {
+            background: rgba(13, 110, 253, 0.2);
+            color: #5ea8ff;
+        }
+        
+        .status-processing {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffd54f;
+        }
+        
+        .status-pending {
+            background: rgba(220, 53, 69, 0.2);
+            color: #f48b95;
+        }
+        
+        .delete-btn {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(220, 53, 69, 0.2);
+        }
+        
+        .delete-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #1e1e1e;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            color: #444444;
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #a0a0a0;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state-text {
+            color: #666666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 58, 64, 0.3);
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 58, 64, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .stats-summary {
+            background: #1e1e1e;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stats-summary h6 {
+            color: #a0a0a0;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #333333;
+        }
+        
+        .stats-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stats-label {
+            font-weight: 500;
+            color: #a0a0a0;
+        }
+        
+        .stats-value {
+            font-weight: 700;
+            color: #5ea8ff;
+        }
+        
+        /* Custom scrollbar for table */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #2d2d2d;
+            border-radius: 4px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: #444444;
+            border-radius: 4px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #555555;
+        }
+        
+        /* Search and Filter Styles */
+        .search-filter-card {
+            background: #1e1e1e;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border: none;
+            overflow: hidden;
+        }
+        
+        .search-filter-header {
+            background: linear-gradient(135deg, #0f6674 0%, #0a4b53 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+        }
+        
+        .search-filter-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .search-filter-body {
+            padding: 1.5rem;
+            background: #1e1e1e;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            background-color: #2d2d2d;
+            border: 2px solid #444444;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+            color: #e0e0e0;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #5ea8ff;
+            box-shadow: 0 0 0 0.2rem rgba(94, 168, 255, 0.25);
+        }
+        
+        .input-group-text {
+            background: #2d2d2d;
+            border: 2px solid #444444;
+            border-right: none;
+            color: #a0a0a0;
+        }
+        
+        .results-summary {
+            background: #1e1e1e;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .results-count {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #5ea8ff;
+        }
+        
+        .results-text {
+            color: #a0a0a0;
+            margin-left: 0.5rem;
+        }
+        
+        .filter-indicator {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffd54f;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        /* Card View Styles */
+        .student-card {
+            background: #1e1e1e;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .student-card-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid #333333;
+        }
+        
+        .student-card-name {
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .student-card-id {
+            color: #a0a0a0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
+        .student-card-body {
+            padding: 1.25rem;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+        
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .student-card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* Bulk Actions */
+        .bulk-actions {
+            position: sticky;
+            bottom: 20px;
+            z-index: 1000;
+        }
+        
+        .bulk-action-buttons .btn {
+            margin: 0 0.25rem;
+        }
+        
+        /* Checkbox Styles */
+        .form-check-input {
+            background-color: #2d2d2d;
+            border-color: #444444;
+        }
+        
+        .form-check-input:checked {
+            background-color: #5ea8ff;
+            border-color: #5ea8ff;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .btn-outline-primary {
+            color: #5ea8ff;
+            border-color: #5ea8ff;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: rgba(94, 168, 255, 0.2);
+            color: #e0e0e0;
+        }
+        
+        .btn-outline-secondary {
+            color: #a0a0a0;
+            border-color: #444444;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+        
+        .btn-outline-danger {
+            color: #f48b95;
+            border-color: #f48b95;
+        }
+        
+        .btn-outline-danger:hover {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #e0e0e0;
+        }
+        
+        .btn-outline-warning {
+            color: #ffd54f;
+            border-color: #ffd54f;
+        }
+        
+        .btn-outline-warning:hover {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #e0e0e0;
+        }
+        
+        .highlight {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffd54f;
+        }
+        
+        .info-item i {
+            color: #a0a0a0 !important;
+        }
+        
+        label {
+            color: #e0e0e0;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .students-table {
+                font-size: 0.8rem;
+            }
+            
+            .students-table thead th,
+            .students-table tbody td {
+                padding: 0.5rem 0.25rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state-icon {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="page-title">
+                        <i class="bi bi-people-fill"></i>
+                        {{ institution.name }} Students
+                    </h1>
+                    <p class="page-subtitle">Student Management Dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if students %}
+            <!-- Search and Filter Section -->
+            <div class="search-filter-card mb-4">
+                <div class="search-filter-header">
+                    <h6 class="search-filter-title">
+                        <i class="bi bi-funnel"></i>
+                        Search & Filter Students
+                    </h6>
+                </div>
+                <div class="search-filter-body">
+                    <form method="GET" id="searchFilterForm">
+                        <div class="row g-3">
+                            <!-- Search Input -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="search" class="form-label">Search Students</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-search"></i>
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="search" 
+                                               name="search" 
+                                               placeholder="Search by name, ID, email, phone, course..."
+                                               value="{{ request.GET.search }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="">All Statuses</option>
+                                        <option value="id_ready" {% if request.GET.status == 'id_ready' %}selected{% endif %}>Ready</option>
+                                        <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Processing</option>
+                                        <option value="application_received" {% if request.GET.status == 'application_received' %}selected{% endif %}>Pending</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Course Filter -->
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="courseFilter" class="form-label">Course</label>
+                                    <select class="form-select" id="courseFilter" name="course">
+                                        <option value="">All Courses</option>
+                                        {% regroup students by course as courses_list %}
+                                        {% for course in courses_list %}
+                                            <option value="{{ course.grouper }}" {% if request.GET.course == course.grouper %}selected{% endif %}>{{ course.grouper }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Sort By -->
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="sort" class="form-label">Sort By</label>
+                                    <select class="form-select" id="sort" name="sort">
+                                        <option value="name-asc" {% if request.GET.sort == 'name-asc' %}selected{% endif %}>Name (A-Z)</option>
+                                        <option value="name-desc" {% if request.GET.sort == 'name-desc' %}selected{% endif %}>Name (Z-A)</option>
+                                        <option value="status" {% if request.GET.sort == 'status' %}selected{% endif %}>Status</option>
+                                        <option value="date-desc" {% if request.GET.sort == 'date-desc' %}selected{% endif %}>Date Added (Newest)</option>
+                                        <option value="date-asc" {% if request.GET.sort == 'date-asc' %}selected{% endif %}>Date Added (Oldest)</option>
+                                        <option value="id" {% if request.GET.sort == 'id' %}selected{% endif %}>Student ID</option>
+                                        <option value="course" {% if request.GET.sort == 'course' %}selected{% endif %}>Course</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Clear Button -->
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                    <i class="bi bi-x-lg"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="results-summary mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="results-count">{{ students | length }}</span>
+                    <span class="results-text">students found</span>
+                    <span class="filter-indicator d-none" id="filterIndicator">Filters Applied</span>
+                </div>
+                <!-- View Toggle -->
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-sm active" id="listViewBtn">
+                        <i class="bi bi-list-ul"></i> List
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="cardViewBtn">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> Cards
+                    </button>
+                </div>
+            </div>
+
+            <!-- Student List/Card View -->
+            <div class="students-card">
+                <!-- List View -->
+                <div class="table-container" id="listViewContainer">
+                    <table class="table students-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;"><input type="checkbox" class="form-check-input" id="selectAllCheckbox"></th>
+                                <th style="width: 10%;">Student ID</th>
+                                <th style="width: 20%;">Name</th>
+                                <th style="width: 20%;">Email</th>
+                                <th style="width: 15%;">Phone</th>
+                                <th style="width: 15%;">Course</th>
+                                <th style="width: 10%;">Status</th>
+                                <th style="width: 5%;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            {% for student in students %}
+                            <tr class="student-row" 
+                                data-id="{{ student.id }}"
+                                data-name="{{ student.first_name|lower }} {{ student.last_name|lower }}"
+                                data-email="{{ student.email|lower }}"
+                                data-phone="{{ student.phone_number|lower }}"
+                                data-status="{{ student.status|lower }}"
+                                data-course="{{ student.course|lower }}"
+                                data-date="{{ student.created_at|date:'YmdHis' }}">
+                                <td><input type="checkbox" class="form-check-input student-checkbox" value="{{ student.id }}"></td>
+                                <td><span class="student-id">{{ student.id }}</span></td>
+                                <td><span class="student-name">{{ student.first_name }} {{ student.last_name }}</span></td>
+                                <td><span class="student-email">{{ student.email }}</span></td>
+                                <td><span class="student-phone">{{ student.phone_number }}</span></td>
+                                <td><span class="student-course">{{ student.course }}</span></td>
+                                <td>
+                                    <span class="status-badge 
+                                        {% if student.status == 'id_ready' %}status-ready{% endif %}
+                                        {% if student.status == 'processing' %}status-processing{% endif %}
+                                        {% if student.status == 'application_received' %}status-pending{% endif %}">
+                                        {{ student.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons d-flex gap-2">
+                                        <a href="{% url 'delete_student' student.id %}?next=/super/students/?q={{ student.institution.email }}">
+                                            <button class="btn btn-sm btn-danger delete-btn" title="Delete Student">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </a>
+                                        <a href="{% url 'update_student' student.id %}?next=/super/students/?q={{ student.institution.email }}">
+                                            <button class="btn btn-sm btn-outline-warning warning-btn" title="Update Student">
+                                                Update
+                                            </button>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Card View (Hidden by default) -->
+                <div class="row g-4 p-4 d-none" id="cardViewContainer">
+                    {% for student in students %}
+                    <div class="col-md-6 col-lg-4 student-card-wrapper"
+                         data-id="{{ student.id }}"
+                         data-name="{{ student.first_name|lower }} {{ student.last_name|lower }}"
+                         data-email="{{ student.email|lower }}"
+                         data-phone="{{ student.phone_number|lower }}"
+                         data-status="{{ student.status|lower }}"
+                         data-course="{{ student.course|lower }}"
+                         data-date="{{ student.created_at|date:'YmdHis' }}">
+                        <div class="student-card">
+                            <div class="student-card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="student-card-name mb-0">{{ student.first_name }} {{ student.last_name }}</h6>
+                                    <small class="student-card-id">ID: {{ student.id }}</small>
+                                </div>
+                                <input type="checkbox" class="form-check-input student-checkbox" value="{{ student.id }}">
+                            </div>
+                            <div class="student-card-body">
+                                <div class="info-item">
+                                    <i class="bi bi-envelope text-muted"></i>
+                                    <span class="student-email">{{ student.email }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="bi bi-telephone text-muted"></i>
+                                    <span class="student-phone">{{ student.phone_number }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="bi bi-book text-muted"></i>
+                                    <span class="student-course">{{ student.course }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="bi bi-check-circle text-muted"></i>
+                                    <span class="status-badge 
+                                        {% if student.status == 'id_ready' %}status-ready{% endif %}
+                                        {% if student.status == 'processing' %}status-processing{% endif %}
+                                        {% if student.status == 'application_received' %}status-pending{% endif %}">
+                                        {{ student.get_status_display }}
+                                    </span>
+                                </div>
+                                <div class="student-card-actions mt-3">
+                                    <a href="{% url 'delete_student' student.id %}?next=/super/students/?q={{ student.institution.email }}" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </a>
+                                    <a href="{% url 'update_student' student.id %}?next=/super/students/?q={{ student.institution.email }}" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-pencil"></i> Update
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <i class="bi bi-people empty-state-icon"></i>
+                <h3 class="empty-state-title">No Students Found</h3>
+                <p class="empty-state-text">{{ institution.name }} doesn't have any registered students yet.</p>
+                <a href="{% url 'institutions_admin' %}" class="back-btn">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Institutions
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- DOM Elements ---
+            const searchInput = document.getElementById('search');
+            const statusFilter = document.getElementById('status');
+            const courseFilter = document.getElementById('courseFilter');
+            const sortSelect = document.getElementById('sort');
+            const listViewBtn = document.getElementById('listViewBtn');
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            const listViewContainer = document.getElementById('listViewContainer');
+            const cardViewContainer = document.getElementById('cardViewContainer');
+            const tableBody = document.getElementById('studentsTableBody');
+            const cardContainer = cardViewContainer;
+            const filterIndicator = document.getElementById('filterIndicator');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+
+            // --- Helper Functions ---
+            function highlightText(element, searchTerm) {
+                if (!element || !searchTerm) return;
+                
+                const text = element.textContent;
+                const regex = new RegExp(`(${searchTerm})`, 'gi');
+                const highlightedText = text.replace(regex, '<span class="highlight">$1</span>');
+                element.innerHTML = highlightedText;
+            }
+
+            function removeHighlight(element) {
+                if (!element) return;
+                element.innerHTML = element.textContent;
+            }
+
+            function updateBulkActions() {
+                const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+                // Add bulk action logic here if needed
+            }
+
+            // --- Main Filter and Sort Function ---
+            function applyFiltersAndSort() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const statusValue = statusFilter.value.toLowerCase();
+                const courseValue = courseFilter.value.toLowerCase();
+                const sortValue = sortSelect.value;
+
+                let visibleCount = 0;
+                const filtersApplied = searchTerm || statusValue || courseValue || sortValue !== 'name-asc';
+
+                // Get all student items (both rows and cards)
+                const studentRows = Array.from(document.querySelectorAll('.student-row'));
+                const studentCards = Array.from(document.querySelectorAll('.student-card-wrapper'));
+                const allItems = [...studentRows, ...studentCards];
+
+                // Create data array for sorting
+                const itemsData = allItems.map(item => {
+                    return {
+                        element: item,
+                        id: item.dataset.id || '',
+                        name: item.dataset.name || '',
+                        email: item.dataset.email || '',
+                        phone: item.dataset.phone || '',
+                        status: item.dataset.status || '',
+                        course: item.dataset.course || '',
+                        date: item.dataset.date || '',
+                        isVisible: true
+                    };
+                });
+
+                // Apply Filters
+                itemsData.forEach(itemData => {
+                    const matchesSearch = !searchTerm || 
+                        itemData.name.includes(searchTerm) || 
+                        itemData.id.includes(searchTerm) || 
+                        itemData.email.includes(searchTerm) || 
+                        itemData.phone.includes(searchTerm) ||
+                        itemData.course.includes(searchTerm);
+                        
+                    const matchesStatus = !statusValue || itemData.status === statusValue;
+                    const matchesCourse = !courseValue || itemData.course === courseValue;
+
+                    itemData.isVisible = matchesSearch && matchesStatus && matchesCourse;
+                });
+
+                // Apply Sorting
+                itemsData.sort((a, b) => {
+                    let valA, valB;
+                    switch (sortValue) {
+                        case 'name-asc':
+                            valA = a.name; valB = b.name; break;
+                        case 'name-desc':
+                            valA = b.name; valB = a.name; break;
+                        case 'status':
+                            valA = a.status; valB = b.status; break;
+                        case 'date-desc':
+                            valA = b.date; valB = a.date; break;
+                        case 'date-asc':
+                            valA = a.date; valB = b.date; break;
+                        case 'id':
+                            valA = a.id; valB = b.id; break;
+                        case 'course':
+                            valA = a.course; valB = b.course; break;
+                        default:
+                            return 0;
+                    }
+                    if (valA < valB) return -1;
+                    if (valA > valB) return 1;
+                    return 0;
+                });
+
+                // Update DOM
+                tableBody.innerHTML = ''; 
+                cardContainer.innerHTML = '';
+
+                itemsData.forEach(itemData => {
+                    if (itemData.isVisible) {
+                        visibleCount++;
+                        // Apply highlight if search term exists
+                        if (searchTerm) {
+                            highlightText(itemData.element.querySelector('.student-name'), searchTerm);
+                            highlightText(itemData.element.querySelector('.student-id'), searchTerm);
+                            highlightText(itemData.element.querySelector('.student-email'), searchTerm);
+                            highlightText(itemData.element.querySelector('.student-phone'), searchTerm);
+                            highlightText(itemData.element.querySelector('.student-course'), searchTerm);
+                        }
+                    } else {
+                        // Remove highlights if hidden
+                        removeHighlight(itemData.element.querySelector('.student-name'));
+                        removeHighlight(itemData.element.querySelector('.student-id'));
+                        removeHighlight(itemData.element.querySelector('.student-email'));
+                        removeHighlight(itemData.element.querySelector('.student-phone'));
+                        removeHighlight(itemData.element.querySelector('.student-course'));
+                    }
+                    
+                    // Append based on original type (row or card)
+                    if (itemData.element.classList.contains('student-row')) {
+                        tableBody.appendChild(itemData.element);
+                        itemData.element.style.display = itemData.isVisible ? '' : 'none';
+                    } else if (itemData.element.classList.contains('student-card-wrapper')) {
+                        cardContainer.appendChild(itemData.element);
+                        itemData.element.style.display = itemData.isVisible ? '' : 'none';
+                    }
+                });
+
+                // Update results count and filter indicator
+                
+                filterIndicator.classList.toggle('d-none', !filtersApplied);
+            }
+
+            // --- View Toggle Logic ---
+            function toggleView(showList) {
+                if (showList) {
+                    listViewContainer.classList.remove('d-none');
+                    cardViewContainer.classList.add('d-none');
+                    listViewBtn.classList.add('active');
+                    cardViewBtn.classList.remove('active');
+                } else {
+                    listViewContainer.classList.add('d-none');
+                    cardViewContainer.classList.remove('d-none');
+                    listViewBtn.classList.remove('active');
+                    cardViewBtn.classList.add('active');
+                }
+            }
+
+            // --- Event Listeners ---
+            searchInput.addEventListener('input', applyFiltersAndSort);
+            statusFilter.addEventListener('change', applyFiltersAndSort);
+            courseFilter.addEventListener('change', applyFiltersAndSort);
+            sortSelect.addEventListener('change', applyFiltersAndSort);
+            listViewBtn.addEventListener('click', () => toggleView(true));
+            cardViewBtn.addEventListener('click', () => toggleView(false));
+
+            selectAllCheckbox.addEventListener('change', function() {
+                studentCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActions();
+            });
+
+            studentCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateBulkActions);
+            });
+
+            // --- Clear Filters Function ---
+            window.clearFilters = function() {
+                searchInput.value = '';
+                statusFilter.value = '';
+                courseFilter.value = '';
+                sortSelect.value = 'name-asc';
+                applyFiltersAndSort();
+            }
+
+            // Initial setup
+            applyFiltersAndSort();
+            toggleView(true);
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base_email.html" %}
+
+{% block title %}Payment Proof Verified - InstiPass{% endblock %}
+
+{% block header %}
+<img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+<h1>Payment Proof Verified</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Hello {{ institution_name|default:"Administrator" }},</h2>
+
+<p>Great news! Your payment proof has been successfully verified and approved.</p>
+
+<div class="update-container" style="background-color: #e8f5e9; border: 1px solid #a5d6a7; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+    <h3>Payment Verified Successfully</h3>
+    <p><strong>Status:</strong> Approved</p>
+    {% if verification_date %}<p><strong>Verified On:</strong> {{ verification_date }}</p>{% endif %}
+    {% if reference_number %}<p><strong>Reference Number:</strong> {{ reference_number }}</p>{% endif %}
+</div>
+
+<div class="divider"></div>
+
+<div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">🎉</div>
+        <div>
+            <strong>Account Activated</strong>
+            <p>Your institution account has been fully activated. You now have access to all InstiPass features and services.</p>
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: flex-start;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">🚀</div>
+        <div>
+            <strong>Get Started</strong>
+            <p>You can now log in to your dashboard and start managing your institution's digital IDs and passes.</p>
+        </div>
+    </div>
+</div>
+
+<div class="security-notice">
+    <h4>Next Steps</h4>
+    <p>Log in to your InstiPass dashboard to complete your institution setup, upload your logo, and create your first digital pass templates. If you need any assistance getting started, our support team is here to help.</p>
+</div>
+
+<p>If you have any questions or need further assistance, please don't hesitate to contact our support team at <a href="mailto:support@instipass.com" style="color: #2A9D8F;">support@instipass.com</a>.</p>
+
+<p>Welcome aboard!<br>
+Best regards,<br>
+The InstiPass Team</p>
+{% endblock %}
+
+{% block extra_styles %}
+.update-container {
+    background-color: #e8f5e9;
+    border: 1px solid #a5d6a7;
+}
+.security-notice {
+    background-color: #fff3e0;
+    border-left: 4px solid #ff9800;
+}
+{% endblock %}

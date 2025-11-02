@@ -1,0 +1,96 @@
+{% extends "base_email.html" %}
+
+{% block title %}InstiPass - Issue Resolved{% endblock %}
+
+{% block header %}
+<img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+<h1>Issue Resolved</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Dear {{ institution_name|default:"Institution" }},</h2>
+
+<p>We are pleased to inform you that the issue you reported has been successfully resolved.</p>
+
+<div class="update-container">
+    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+    <h3>Resolution Details</h3>
+    <p><strong>Status:</strong> Resolved</p>
+    <p><strong>Issue ID:</strong> {{ issue_id }}</p>
+    <p><strong>Resolution Date:</strong> {{ resolution_date }}</p>
+</div>
+
+<div class="action-buttons">
+    <a href="#" class="cta-button">View Resolution Details</a>
+</div>
+
+<div class="divider"></div>
+
+<div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">👍</div>
+        <div>
+            <strong>Feedback Appreciated</strong>
+            <p>If you have any further questions or feedback, please do not hesitate to contact us.</p>
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: flex-start;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">🌟</div>
+        <div>
+            <strong>Your Satisfaction</strong>
+            <p>We strive to provide the best support possible and appreciate your patience.</p>
+        </div>
+    </div>
+</div>
+
+<div class="security-notice">
+    <h4>Need Help?</h4>
+    <p>If you have any questions regarding this resolution, please contact our support team at <a href="mailto:support@instipass.com">support@instipass.com</a>.</p>
+</div>
+
+<p>Thank you for your understanding and cooperation.</p>
+
+<p>Best regards,<br>
+The InstiPass Team</p>
+{% endblock %}
+
+{% block extra_styles %}
+.update-container {
+    background-color: #e8f5e9; /* Light green for success */
+    border: 1px solid #a5d6a7; /* Green border */
+}
+.cta-button {
+    display: inline-block;
+    background-color: #2A9D8F; /* InstiPass accent color */
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+.email-logo {
+    max-width: 150px;
+    height: auto;
+    display: block;
+    margin: 0 auto 20px;
+}
+.divider {
+    border-bottom: 1px solid #e0e0e0;
+    margin: 20px 0;
+}
+.security-notice {
+    background-color: #f8f8f8;
+    border-left: 4px solid #ccc;
+    padding: 15px;
+    margin: 20px 0;
+}
+.security-notice h4 {
+    margin-top: 0;
+    color: #333;
+}
+.security-notice p {
+    margin-bottom: 0;
+}
+{% endblock %}
+

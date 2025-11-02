@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Student Information</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <style>
+        /* Instipass Theme Colors */
+        :root {
+            --primary-color: #0d6efd;
+            --primary-dark: #0056b3;
+            --accent-color: #2A9D8F;
+            --header-color: #1D3557;
+            --light-bg: #f8f9fa;
+            --dark-bg: #212529;
+            --dark-card-bg: #343a40;
+            --light-card-bg: #ffffff;
+        }
+
+        /* Light Mode (Default) */
+        body {
+            background-color: var(--light-bg);
+            color: #212529;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .card {
+            background-color: var(--light-card-bg);
+            border-color: #dee2e6;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .form-control, .form-select {
+            background-color: #fff;
+            border-color: #ced4da;
+            color: #212529;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        .section-header {
+            color: var(--header-color);
+            transition: color 0.3s;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            color: #fff;
+        }
+
+        body.dark-mode .card {
+            background-color: var(--dark-card-bg);
+            border-color: #495057;
+        }
+
+        body.dark-mode .form-control,
+        body.dark-mode .form-select {
+            background-color: #495057;
+            border-color: #6c757d;
+            color: #fff;
+        }
+
+        body.dark-mode .section-header {
+            color: var(--accent-color);
+        }
+
+        body.dark-mode .text-muted {
+            color: #adb5bd !important;
+        }
+
+        /* Common Styles */
+        .page-header {
+            background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+            color: white;
+            border-radius: 0 0 0.5rem 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label.required::after {
+            content: "*";
+            color: #dc3545;
+            margin-left: 4px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.25rem rgba(42, 157, 143, 0.25);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        body.dark-mode .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        body.dark-mode .btn-primary:hover {
+            background-color: #238b7e;
+            border-color: #238b7e;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        body:not(.dark-mode) .theme-toggle {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .theme-toggle {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .text-danger {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Animation for form elements */
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom form styling */
+        .form-control, .form-select {
+            padding: 0.625rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.95rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: whitesmoke;
+        }
+        @media (prefers-color-scheme: dark){
+            label{
+                color: #fff;
+            }
+        }
+        .current-photo-preview {
+            max-width: 150px;
+            height: auto;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Page Header -->
+        <div class="page-header py-3 px-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 d-flex align-items-center">
+                        <i class="bi bi-person-badge me-2"></i>
+                        Update Student Information
+                    </h1>
+                    <p class="mb-0 opacity-75">Update your student registration details</p>
+                </div>
+                <!-- <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <i class="bi bi-moon-fill" id="theme-toggle-icon"></i>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <!-- Form -->
+                    <form method="post" novalidate enctype="multipart/form-data">
+                        <!-- CSRF Token (for Django integration) -->
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        
+                        <!-- Registration Number Field -->
+                        <div class="form-group">
+                            <label for="id_reg_no" class="form-label required">Registration Number</label>
+                            <input type="text" name="reg_no" id="id_reg_no" class="form-control" value="{{ form.reg_no.value|default:'' }}" required>
+                            {% if form.reg_no.errors %}
+                            <div class="text-danger">
+                                {{ form.reg_no.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Enter your unique student registration number</small>
+                        </div>
+                        
+                        <!-- First Name Field -->
+                        <div class="form-group">
+                            <label for="id_first_name" class="form-label required">First Name</label>
+                            <input type="text" name="first_name" id="id_first_name" class="form-control" value="{{ form.first_name.value|default:'' }}" required>
+                            {% if form.first_name.errors %}
+                            <div class="text-danger">
+                                {{ form.first_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Last Name Field -->
+                        <div class="form-group">
+                            <label for="id_last_name" class="form-label required">Last Name</label>
+                            <input type="text" name="last_name" id="id_last_name" class="form-control" value="{{ form.last_name.value|default:'' }}" required>
+                            {% if form.last_name.errors %}
+                            <div class="text-danger">
+                                {{ form.last_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Course Field -->
+                        <div class="form-group">
+                            <label for="id_course" class="form-label required">Course</label>
+                            <input type="text" name="course" id="id_course" class="form-control" value="{{ form.course.value|default:'' }}" required>
+                            {% if form.course.errors %}
+                            <div class="text-danger">
+                                {{ form.course.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Enter your current course of study</small>
+                        </div>
+                        
+                        <!-- Admission Year Field -->
+                        <div class="form-group">
+                            <label for="id_admission_year" class="form-label required">Admission Year</label>
+                            <input type="text" name="admission_year" id="id_admission_year" class="form-control" value="{{ form.admission_year.value|default:'' }}" required>
+                            {% if form.admission_year.errors %}
+                            <div class="text-danger">
+                                {{ form.admission_year.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Email Field -->
+                        <div class="form-group">
+                            <label for="id_email" class="form-label required">Email Address</label>
+                            <input type="email" name="email" id="id_email" class="form-control" value="{{ form.email.value|default:'' }}" required>
+                            {% if form.email.errors %}
+                            <div class="text-danger">
+                                {{ form.email.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">We'll never share your email with anyone else</small>
+                        </div>
+                        
+                        <!-- Phone Number Field -->
+                        <div class="form-group">
+                            <label for="id_phone_number" class="form-label required">Phone Number</label>
+                            <input type="tel" name="phone_number" id="id_phone_number" class="form-control" value="{{ form.phone_number.value|default:'' }}" required>
+                            {% if form.phone_number.errors %}
+                            <div class="text-danger">
+                                {{ form.phone_number.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Photo Field -->
+                        <div class="form-group">
+                            <label for="photo" class="form-label required">Student Photo</label>
+                            {% if form.photo.value %}
+                                <p class="text-white">Current Image:</p>
+                                <img src="{{ form.photo.value.url }}" alt="Current Student Photo" class="current-photo-preview" height="100" width="100">
+                                <br>
+                                <small class="form-text text-muted">Select a new file below to change the photo.</small>
+                            {% endif %}
+
+                            <input type="file" name="photo" id="photo" class="form-control" {% if not form.photo.value %}required{% endif %}>
+                            
+                            {% if form.photo.errors %}
+                                <div class="text-danger">
+                                    {{ form.photo.errors }}
+                                </div>
+                            {% endif %}
+                            
+                            <small class="form-text text-muted">Upload a clear photo of the student</small>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.history.back();">
+                                <i class="bi bi-arrow-left me-1"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i> Update
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for saved theme preference
+            document.body.classList.add('dark-mode');
+        });
+    </script>
+</body>
+</html>
+```

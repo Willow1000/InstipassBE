@@ -1,0 +1,36 @@
+#Getting access and refresh tokens
+POST http://localhost:8000/api/token/
+Content-Type: application/json
+Accept: application/json
+
+{
+    "username":"admin",
+    "password":"admin"
+}
+
+### Get Institutions
+GET http://localhost:8000/institution/api/institution
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzMTkyNDg3LCJpYXQiOjE3NDMxODE2ODcsImp0aSI6IjFhZGEwNTVlYzg0YTRiMDJiM2FhNzlmZjgxNzcwNDI1IiwidXNlcl9pZCI6MX0.XUQCKFhN3hp4icrmQf7iw7w9lxn2C4N_AxhmNYxbUJQ
+
+
+### Get Institution Settings
+GET http://localhost:8000/api/institution_settings
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzMTU1OTU2LCJpYXQiOjE3NDMxNDUxNTYsImp0aSI6ImUzODQ4MmExYzc0YjQ0ZDE5YmNiNGJlYjkwMTNjOWUzIiwidXNlcl9pZCI6MX0.70qYoKKyuyr3_4OtkYKDG2iaQpRkBt61PKKB9UXMTY0
+
+### Post Institution
+POST  http://localhost:8000/api/institution_settings/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzMTU1OTU2LCJpYXQiOjE3NDMxNDUxNTYsImp0aSI6ImUzODQ4MmExYzc0YjQ0ZDE5YmNiNGJlYjkwMTNjOWUzIiwidXNlcl9pZCI6MX0.70qYoKKyuyr3_4OtkYKDG2iaQpRkBt61PKKB9UXMTY0
+Content-Type: application/json
+Accept: application/json
+
+{
+    "qrcode": false,
+    "barcode": true,
+    "min_admission_year": 2020,
+    "notification_pref": "email",
+    "template": null,
+    "institution": 1
+}
+

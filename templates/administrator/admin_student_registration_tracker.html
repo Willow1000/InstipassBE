@@ -1,0 +1,608 @@
+{% extends "base.html" %}
+{% block title %}Student Registration Tracker{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+    
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 mb-1">Registration Tracker</h1>
+                        <p class="text-muted mb-0">Monitor and analyze students registration attempts</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary fs-6">Total Registrations: {{ trackers|length }}</span>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshPage()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if trackers %}
+            <!-- Filters and Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchRegistrations" placeholder="Search by name, fingerprint, or IP...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Device Type</label>
+                            <select class="form-select" id="deviceFilter">
+                                <option value="">All Devices</option>
+                                <option value="desktop">Desktop</option>
+                                <option value="mobile">Mobile</option>
+                                <option value="tablet">Tablet</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Date Range</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Institution</label>
+                            <select class="form-select" id="institutionFilter">
+                                <option value="">All Institutions</option>
+                                {% for inst in unique_institutions %}
+                                    {% if inst %}
+                                        <option value="{{ inst }}">{{ inst }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                               Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-primary bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-calendar-check text-primary fa-2x mb-2"></i>
+                            <h5 class="card-title text-primary" id="todayCount">0</h5>
+                            <p class="card-text text-muted small">Registrations Today</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-success bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-fingerprint text-success fa-2x mb-2"></i>
+                            <h5 class="card-title text-success" id="uniqueFingerprintCount">0</h5>
+                            <p class="card-text text-muted small">Unique Fingerprints</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-info bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-globe text-info fa-2x mb-2"></i>
+                            <h5 class="card-title text-info" id="uniqueIpCount">0</h5>
+                            <p class="card-text text-muted small">Unique IPs</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-warning bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-mobile-alt text-warning fa-2x mb-2"></i>
+                            <h5 class="card-title text-warning" id="mobileCount">0</h5>
+                            <p class="card-text text-muted small">Mobile Devices</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registrations Table -->
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark">Registration Attempts</h5>
+                        <div class="d-flex gap-2">
+                      
+                            <a href="/super/clear/student/tracker">
+                                <button class="btn btn-outline-danger btn-sm" onclick="clearRegistrations()">
+                                    <i class="fas fa-trash me-1"></i>Clear All
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="registrationsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;">
+                                        <small>ID</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;">
+                                        <small>Institution</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;">
+                                        <small>Student</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 180px;">
+                                        <small>Fingerprint</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 120px;">
+                                        <small>IP Address</small>
+                                    </th>
+                                    <th class="px-3 py-3">
+                                        <small>Device / Browser</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 150px;">
+                                        <small>Submitted At</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 80px;">
+                                        <small>Actions</small>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="registrationsTableBody">
+                                {% for registration in trackers %}
+                                <tr class="registration-row" 
+                                    data-fingerprint="{{ registration.fingerprint }}" 
+                                    data-ip="{{ registration.ip_address }}"
+                                    data-user-agent="{{ registration.user_agent }}"
+                                    data-timestamp="{{ registration.submitted_at|date:'Y-m-d H:i:s' }}"
+                                    data-institution="{{ registration.institution|default:'' }}"
+                                    data-student="{{ registration.student|default:'' }}">
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">#{{ registration.id }}</small>
+                                    </td>
+
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">{{ registration.institution }}</small>
+                                    </td>
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">{{ registration.student }}</small>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <code class="small bg-light px-2 py-1 rounded text-break">{{ registration.fingerprint|truncatechars:20 }}</code>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <code class="small bg-light px-2 py-1 rounded">{{ registration.ip_address }}</code>
+                                    </td>
+                                    
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <span class="device-icon me-2" data-user-agent="{{ registration.user_agent }}">
+                                                <!-- Icon will be set by JavaScript based on user agent -->
+                                                <i class="fas fa-laptop"></i>
+                                            </span>
+                                            <span class="small text-truncate">{{ registration.user_agent|truncatechars:50 }}</span>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">
+                                            {{ registration.submitted_at|date:"M d, Y" }}<br>
+                                            {{ registration.submitted_at|date:"H:i:s" }}
+                                        </small>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewDetails({{ registration.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    Showing <span id="showingCount">{{ trackers|length }}</span> of {{ trackers|length }} entries
+                </div>
+                <div id="paginationControls" class="d-flex gap-2">
+                    <!-- Pagination controls would go here -->
+                </div>
+            </div>
+
+        {% elif no_results %}
+            <!-- No Search Results -->
+            <div class="text-center py-5">
+                <div class="text-muted">
+                    <i class="fas fa-search fa-4x mb-4 text-secondary"></i>
+                    <h3>No Results Found</h3>
+                    <p class="lead">Your search didn't match any registrations. Try adjusting your search criteria.</p>
+                    <button class="btn btn-outline-primary" onclick="clearFilters()">Clear Filters</button>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="text-muted">
+                    <i class="fas fa-clipboard-list fa-4x mb-4 text-secondary"></i>
+                    <h3>No Registration Data Found</h3>
+                    <p class="lead">Registration tracking data will appear here once users start registering.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Registration Details Modal -->
+    <div class="modal fade" id="registrationDetailsModal" tabindex="-1" aria-labelledby="registrationDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registrationDetailsModalLabel">Registration Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">ID</label>
+                            <div class="form-control text-white" id="detailId"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">Submitted At</label>
+                            <div class="form-control text-white" id="detailTimestamp"></div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label text-muted small">Fingerprint</label>
+                            <div class="form-control text-white text-break" id="detailFingerprint"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">IP Address</label>
+                            <div class="form-control text-white" id="detailIp"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">Location</label>
+                            <div class="form-control text-white" id="detailLocation">
+                                <span class="text-muted">Location data not available</span>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label text-muted small">User Agent</label>
+                            <div class="form-control text-white" style="height: auto; min-height: 100px;" id="detailUserAgent"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize statistics
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            attachFilterListeners();
+            setDeviceIcons();
+        });
+
+        function updateStatistics() {
+            const rows = document.querySelectorAll('.registration-row');
+            let todayCount = 0;
+            const uniqueFingerprints = new Set();
+            const uniqueIps = new Set();
+            let mobileCount = 0;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            rows.forEach(row => {
+                const timestamp = new Date(row.dataset.timestamp);
+                const fingerprint = row.dataset.fingerprint;
+                const ip = row.dataset.ip;
+                const userAgent = row.dataset.userAgent.toLowerCase();
+                
+                uniqueFingerprints.add(fingerprint);
+                uniqueIps.add(ip);
+                
+                if (timestamp >= today) {
+                    todayCount++;
+                }
+                
+                if (userAgent.includes('mobile') || userAgent.includes('android') || userAgent.includes('iphone')) {
+                    mobileCount++;
+                }
+            });
+            
+            document.getElementById('todayCount').textContent = todayCount;
+            document.getElementById('uniqueFingerprintCount').textContent = uniqueFingerprints.size;
+            document.getElementById('uniqueIpCount').textContent = uniqueIps.size;
+            document.getElementById('mobileCount').textContent = mobileCount;
+        }
+        
+        function setDeviceIcons() {
+            const deviceIcons = document.querySelectorAll('.device-icon');
+            
+            deviceIcons.forEach(icon => {
+                const userAgent = icon.dataset.userAgent.toLowerCase();
+                let iconClass = 'fas fa-laptop';
+                
+                if (userAgent.includes('mobile') || userAgent.includes('android') || userAgent.includes('iphone')) {
+                    iconClass = 'fas fa-mobile-alt';
+                } else if (userAgent.includes('tablet') || userAgent.includes('ipad')) {
+                    iconClass = 'fas fa-tablet-alt';
+                }
+                
+                icon.innerHTML = `<i class="${iconClass}"></i>`;
+            });
+        }
+        
+        function attachFilterListeners() {
+            document.getElementById('searchRegistrations').addEventListener('input', filterRegistrations);
+            document.getElementById('deviceFilter').addEventListener('change', filterRegistrations);
+            document.getElementById('dateFilter').addEventListener('change', filterRegistrations);
+            document.getElementById('institutionFilter').addEventListener('change', filterRegistrations);
+        }
+        
+        function filterRegistrations() {
+            const searchTerm = document.getElementById('searchRegistrations').value.toLowerCase();
+            const deviceFilter = document.getElementById('deviceFilter').value.toLowerCase();
+            const dateFilter = document.getElementById('dateFilter').value;
+            const institutionFilter = document.getElementById('institutionFilter').value.toLowerCase();
+            
+            const rows = document.querySelectorAll('.registration-row');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const fingerprint = row.dataset.fingerprint.toLowerCase();
+                const ip = row.dataset.ip.toLowerCase();
+                const userAgent = row.dataset.userAgent.toLowerCase();
+                const timestamp = new Date(row.dataset.timestamp);
+                const institution = row.dataset.institution ? row.dataset.institution.toLowerCase() : '';
+                const student = row.dataset.student ? row.dataset.student.toLowerCase() : '';
+                
+                // Search filter: includes institution and student names
+                const matchesSearch = searchTerm === '' || 
+                                     fingerprint.includes(searchTerm) || 
+                                     ip.includes(searchTerm) ||
+                                     institution.includes(searchTerm) ||
+                                     student.includes(searchTerm);
+                
+                // Device filter
+                let matchesDevice = true;
+                if (deviceFilter !== '') {
+                    if (deviceFilter === 'mobile') {
+                        matchesDevice = userAgent.includes('mobile') || userAgent.includes('android') || userAgent.includes('iphone');
+                    } else if (deviceFilter === 'tablet') {
+                        matchesDevice = userAgent.includes('tablet') || userAgent.includes('ipad');
+                    } else if (deviceFilter === 'desktop') {
+                        matchesDevice = !userAgent.includes('mobile') && !userAgent.includes('android') && 
+                                       !userAgent.includes('iphone') && !userAgent.includes('tablet') && 
+                                       !userAgent.includes('ipad');
+                    }
+                }
+                
+                // Date filter
+                let matchesDate = true;
+                if (dateFilter !== '') {
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    
+                    if (dateFilter === 'today') {
+                        matchesDate = timestamp >= today;
+                    } else if (dateFilter === 'week') {
+                        const weekStart = new Date(now);
+                        weekStart.setDate(now.getDate() - now.getDay());
+                        weekStart.setHours(0, 0, 0, 0);
+                        matchesDate = timestamp >= weekStart;
+                    } else if (dateFilter === 'month') {
+                        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                        matchesDate = timestamp >= monthStart;
+                    }
+                }
+
+                // Institution filter
+                const matchesInstitution = institutionFilter === '' || institution === institutionFilter;
+                
+                if (matchesSearch && matchesDevice && matchesDate && matchesInstitution) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('showingCount').textContent = visibleCount;
+        }
+        
+        function clearFilters() {
+            document.getElementById('searchRegistrations').value = '';
+            document.getElementById('deviceFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('institutionFilter').value = '';
+            filterRegistrations();
+        }
+        
+        function viewDetails(id) {
+            const row = document.querySelector(`.registration-row:nth-child(${id})`) || 
+                       document.querySelector('.registration-row');
+            
+            // Better: Use data attribute if you add it, or find by iteration
+            // For now, we’ll use a fallback
+            let targetRow = document.querySelector(`.registration-row[data-id="${id}"]`);
+            if (!targetRow) {
+                const allRows = Array.from(document.querySelectorAll('.registration-row'));
+                targetRow = allRows.find((r, idx) => idx + 1 === id) || allRows[0];
+            }
+
+            if (targetRow) {
+                document.getElementById('detailId').textContent = id;
+                document.getElementById('detailFingerprint').textContent = targetRow.dataset.fingerprint;
+                document.getElementById('detailIp').textContent = targetRow.dataset.ip;
+                document.getElementById('detailUserAgent').textContent = targetRow.dataset.userAgent;
+                document.getElementById('detailTimestamp').textContent = targetRow.dataset.timestamp;
+                
+                const modal = new bootstrap.Modal(document.getElementById('registrationDetailsModal'));
+                modal.show();
+            }
+        }
+        
+
+        
+        function clearRegistrations() {
+            if (confirm('Are you sure you want to clear all registration data? This action cannot be undone.')) {
+                alert('Clear functionality would be implemented here.');
+            }
+        }
+        
+        function refreshPage() {
+            window.location.reload();
+        }
+    </script>
+
+    <style>
+        /* Dark mode styles for this specific page */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                color: #e0e0e0;
+            }
+            
+            .text-muted {
+                color: #a0a0a0 !important;
+            }
+            
+            .card {
+                background-color: #1e1e1e;
+                border-color: #333333;
+            }
+            
+            .card-header {
+                background-color: #2d2d2d !important;
+                border-color: #333333;
+            }
+            
+            .table {
+                color: #e0e0e0;
+            }
+            
+            .table-hover tbody tr:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+            
+            .form-control, .form-select {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #e0e0e0;
+            }
+            
+            .input-group-text {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #a0a0a0;
+            }
+            
+            .btn-outline-secondary {
+                color: #a0a0a0;
+                border-color: #444444;
+            }
+            
+            .btn-outline-secondary:hover {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-primary {
+                color: #3d8bfd;
+                border-color: #3d8bfd;
+            }
+            
+            .btn-outline-primary:hover {
+                background-color: rgba(61, 139, 253, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-danger {
+                color: #dc3545;
+                border-color: #dc3545;
+            }
+            
+            .btn-outline-danger:hover {
+                background-color: rgba(220, 53, 69, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-info {
+                color: #0dcaf0;
+                border-color: #0dcaf0;
+            }
+            
+            .btn-outline-info:hover {
+                background-color: rgba(13, 202, 240, 0.2);
+                color: #e0e0e0;
+            }
+            
+            code {
+                background-color: #2d2d2d !important;
+                color: #e83e8c;
+            }
+            
+            .bg-light {
+                background-color: #2d2d2d !important;
+            }
+            
+            .modal-content {
+                background-color: #1e1e1e;
+                border-color: #333333;
+            }
+            
+            .modal-header, .modal-footer {
+                background-color: #2d2d2d;
+                border-color: #333333;
+            }
+            
+            .btn-close {
+                filter: invert(1) grayscale(100%) brightness(200%);
+            }
+            
+            .bg-opacity-10 {
+                --bs-bg-opacity: 0.2 !important;
+            }
+            
+            .table-dark {
+                background-color: #2d2d2d;
+            }
+        }
+    </style>
+{% endblock %}

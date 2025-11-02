@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt - InstiPass</title>
+    <style>
+        /* InstiPass theme colors */
+        :root {
+            --primary: #2A9D8F;
+            --secondary: #1D3557;
+            --accent: #E76F51;
+            --warning: #F4A261;
+            --success: #4CAF50;
+        }
+        
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .receipt-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .company-logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .company-tagline {
+            color: var(--primary);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .receipt-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--secondary);
+            margin: 20px 0;
+            text-transform: uppercase;
+        }
+        
+        .receipt-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .info-section {
+            flex: 1;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .reference-number {
+            background: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        
+        .payment-details {
+            background: #e8f4ff;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 30px 0;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .amount {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        
+        .currency {
+            font-size: 24px;
+            color: #666;
+        }
+        
+        .payment-method {
+            font-size: 18px;
+            color: #555;
+            margin-top: 10px;
+        }
+        
+        .customer-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 5px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .thank-you {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 20px 0;
+            text-align: center;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 8px;
+        }
+        
+        .watermark {
+            opacity: 0.05;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            color: var(--primary);
+            pointer-events: none;
+            font-weight: bold;
+        }
+        
+        .security-features {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .important-numbers {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .number-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #f0f0f0;
+            margin: 0 5px;
+            border-radius: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        
+        .status-paid {
+            background-color: #e8f5e9;
+            color: var(--success);
+        }
+        
+        .divider {
+            border-top: 1px solid #eeeeee;
+            margin: 25px 0;
+        }
+        
+        /* Responsive styles */
+        @media screen and (max-width: 600px) {
+            .receipt-info, .important-numbers {
+                flex-direction: column;
+            }
+            
+            .info-section, .number-item {
+                margin-bottom: 15px;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .receipt-container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Watermark -->
+    <div class="watermark">PAID</div>
+    
+    <div class="receipt-container">
+        <!-- Header Section -->
+        <div class="header">
+            <img src="https://via.placeholder.com/200x60/2A9D8F/FFFFFF?text=InstiPass" alt="InstiPass Logo" class="company-logo">
+            <div class="company-name">{{ company_name }}</div>
+            <div class="receipt-title">Payment Receipt</div>
+        </div>
+        
+        <!-- Important Numbers -->
+        <div class="important-numbers">
+            <div class="number-item">
+                <div class="info-label">RECEIPT ID</div>
+                <div class="info-value" style="font-size: 18px; font-weight: bold;">{{ receipt_id }}</div>
+            </div>
+            <div class="number-item">
+                <div class="info-label">REFERENCE NUMBER</div>
+                <div class="info-value" style="font-size: 18px; font-weight: bold;">{{ reference_number }}</div>
+            </div>
+        </div>
+        
+        <!-- Reference Number Highlight -->
+        <div class="reference-number">
+            Reference: {{ reference_number }}
+        </div>
+        
+        <!-- Receipt Information -->
+        <div class="receipt-info">
+            <div class="info-section">
+                <div class="info-label">DATE ISSUED</div>
+                <div class="info-value">{{ date }}</div>
+                
+                <div class="info-label">PAYMENT METHOD</div>
+                <div class="info-value">{{ payment_method }}</div>
+            </div>
+            
+            <div class="info-section">
+                <div class="info-label">YEAR</div>
+                <div class="info-value">{{ year }}</div>
+                
+                <div class="info-label">STATUS</div>
+                <div class="info-value">
+                    <span class="status-badge status-paid">PAID</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Amount -->
+        <div class="payment-details">
+            <div class="info-label">TOTAL AMOUNT PAID</div>
+            <div class="amount">{{ currency }} {{ amount }}</div>
+            <div class="payment-method">via {{ payment_method }}</div>
+        </div>
+        
+        <!-- Customer Information -->
+        <div class="customer-info">
+            <div class="section-title">Customer Information</div>
+            <div style="display: flex; justify-content: space-between;">
+                <div style="flex: 1;">
+                    <div class="info-label">NAME</div>
+                    <div class="info-value">{{ customer_name }}</div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="info-label">EMAIL</div>
+                    <div class="info-value">{{ customer_email }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction Details -->
+        <div class="customer-info">
+            <div class="section-title">Transaction Details</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <div class="info-label">REFERENCE NUMBER</div>
+                    <div class="info-value">{{ reference_number }}</div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="info-label">RECEIPT ID</div>
+                    <div class="info-value">{{ receipt_id }}</div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <div style="flex: 1;">
+                    <div class="info-label">PAYMENT METHOD</div>
+                    <div class="info-value">{{ payment_method }}</div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="info-label">DATE</div>
+                    <div class="info-value">{{ date }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Thank You Message -->
+        <div class="thank-you">
+            Thank you for choosing Instipass
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="security-features">
+                This is an computer-generated receipt. No signature required.
+                <br>Reference Number: {{ reference_number }}
+            </div>
+            <div>
+                For any inquiries, please contact {{ company_name }} support
+            </div>
+            <div style="margin-top: 10px;">
+                &copy; {{ year }} {{ company_name }}. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

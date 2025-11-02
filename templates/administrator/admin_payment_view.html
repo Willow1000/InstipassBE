@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+{% block title %}Payment Records{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 text-white mb-1">Payment Records</h1>
+                        <p class="text-muted mb-0">Manage and monitor transaction payments</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary fs-6">Total Payments: {{ payments|length }}</span>
+                       
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshPage()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Payment Button -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPaymentModal">
+                    <i class="bi bi-plus-circle me-2"></i>Create Payment
+                </button>
+            </div>
+        </div>
+
+        {% if payments %}
+            <!-- Filters and Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchPayments" placeholder="Search by institution, reference number...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Date Range</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center border-0 bg-primary bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-credit-card-2-front text-primary bi-2x mb-2"></i>
+                            <h5 class="card-title text-primary">{{ payments|length }}</h5>
+                            <p class="card-text text-muted small">Total Payments</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center border-0 bg-info bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-building text-info bi-2x mb-2"></i>
+                            <h5 class="card-title text-info" id="institutionCount">{{ institutions_count|default:0 }}</h5>
+                            <p class="card-text text-muted small">Institutions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center border-0 bg-success bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-currency-exchange text-success bi-2x mb-2"></i>
+                            <h5 class="card-title text-success" id="totalAmount">{{ total_amount|default:0 }}</h5>
+                            <p class="card-text text-muted small">Total Amount</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Table -->
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark">Payment Records</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="paymentsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;"><small>ID</small></th>
+                                    <th class="px-3 py-3" style="width: 180px;"><small>Institution</small></th>
+                                    <th class="px-3 py-3" style="width: 120px;"><small>Amount</small></th>
+                                    <th class="px-3 py-3" style="width: 100px;"><small>Currency</small></th>
+                                    <th class="px-3 py-3" style="width: 160px;"><small>Reference Number</small></th>
+                                    <th class="px-3 py-3" style="width: 160px;"><small>Payment Method</small></th>
+                                    <th class="px-3 py-3" style="width: 160px;"><small>Created At</small></th>
+                                    <th class="px-3 py-3 text-center" style="width: 140px;"><small>Actions</small></th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody">
+                                {% for payment in payments %}
+                                <tr class="payment-row"
+                                    data-institution="{{ payment.institution.name}}"
+                                    data-reference="{{ payment.reference_number }}"
+                                    data-amount="{{ payment.amount }}"
+                                    data-currency="{{ payment.currency }}"
+                                    data-date="{{ payment.created_at|date:'Y-m-d' }}"
+                                    data-created="{{ payment.created_at|date:'Y-m-d H:i:s' }}">
+
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">#{{ payment.id }}</small>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-building text-primary me-2"></i>
+                                             <span class="fw-medium">{{ payment.institution }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <span class="fw-medium">{{ payment.amount }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <span class="badge bg-secondary">{{ payment.currency }}</span>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-credit-card-2-front text-primary me-2"></i>
+                                            <span class="fw-medium">{{ payment.reference_number }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <span class="badge bg-info text-dark">{{ payment.method }}</span>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <small class="text-muted">
+                                            {{ payment.created_at|date:"M d, Y" }}<br>
+                                            {{ payment.created_at|date:"H:i:s" }}
+                                        </small>
+                                    </td>
+
+                                    <td class="px-3 py-3 text-center">
+                                        <div class="btn-group d-flex gap-2">
+                                            <button class="btn btn-sm btn-outline-info payment-details-btn" 
+                                                    data-payment-id="{{ payment.id }}"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#paymentDetailsModal">
+                                                <i class="bi bi-eye me-1"></i>Details
+                                            </button>
+                                         
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-credit-card-x text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">No Payments Found</h4>
+                <p class="text-muted">There are currently no payment records in the system.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Create Payment Modal -->
+    <div class="modal fade" id="createPaymentModal" tabindex="-1" aria-labelledby="createPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createPaymentModalLabel">Create New Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="createPaymentForm" action="http://127.0.0.1:8000/institution/api/payment/" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="institution" class="form-label">Institution *</label>
+                                <select class="form-select" id="institution" name="institution" required>
+                                    <option value="">Select Institution</option>
+                                    {% for institution in institutions %}
+                                        <option value="{{ institution.id }}">{{ institution.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="proof" class="form-label">Payment Proof *</label>
+                                <select class="form-select" id="proof" name="proof" >
+                                    <option value="">Select Payment Proof</option>
+                                    {% for proof in proofs %}
+                                        <option value="{{ proof.id }}">{{ proof }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="amount" class="form-label">Amount *</label>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="currency" class="form-label">Currency *</label>
+                                <select class="form-select" id="currency" name="currency" required>
+                                    <option value="">Select Currency</option>
+                                    <option value="KSH">Kenyan Shillings</option>
+                                    <option value="USD">US Dollars</option>
+                                    <option value="USDT">Tether</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                               <label for="method" class="form-label">Payment Method *</label>
+                                <select class="form-select" id="method" name="method" required>
+                                <option value="">-- Select Payment Method --</option>
+                                <option value="MPESA">Mpesa</option>
+                                <option value="BANK">Bank</option>
+                                <option value="CASH">Cash</option>
+                                <option value="CRYPTO">Crypto</option>
+                                </select>
+
+                            </div>
+                            <div class="col-md-6">
+                                <label for="reference_number" class="form-label">Reference Number *</label>
+                                <input type="text" class="form-control" id="reference_number" name="reference_number" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="createPaymentBtn">Create Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Details Modal -->
+    <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentDetailsModalLabel">Payment Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="paymentDetailsContent">
+                    <!-- Payment details will be loaded here via JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Search, Filter, and Stats -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchPayments');
+            const dateFilter = document.getElementById('dateFilter');
+            const tableBody = document.getElementById('paymentsTableBody');
+            const allRows = Array.from(tableBody.querySelectorAll('.payment-row'));
+            const createPaymentForm = document.getElementById('createPaymentForm');
+            const createPaymentBtn = document.getElementById('createPaymentBtn');
+
+            let currentPage = 1;
+            let filteredRows = [...allRows];
+
+            // Update statistics
+            function updateStatistics(rows) {
+                const institutionCount = new Set(rows.map(row => row.dataset.institution)).size;
+                const totalAmount = rows.reduce((sum, row) => {
+                    return sum + parseFloat(row.dataset.amount || 0);
+                }, 0);
+
+                document.getElementById('institutionCount').textContent = institutionCount;
+                document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+            }
+
+            // Date range check
+            function isDateInRange(dateStr, range) {
+                if (!dateStr || !range) return true;
+                const today = new Date();
+                const rowDate = new Date(dateStr);
+
+                const todayStr = today.toISOString().split('T')[0];
+                const day = today.getDay();
+                const month = today.getMonth();
+                const year = today.getFullYear();
+
+                switch (range) {
+                    case 'today':
+                        return dateStr === todayStr;
+                    case 'week':
+                        const firstDayOfWeek = new Date(today);
+                        firstDayOfWeek.setDate(today.getDate() - day);
+                        firstDayOfWeek.setHours(0, 0, 0, 0);
+                        const lastDayOfWeek = new Date(firstDayOfWeek);
+                        lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+                        return rowDate >= firstDayOfWeek && rowDate <= lastDayOfWeek;
+                    case 'month':
+                        return rowDate.getMonth() === month && rowDate.getFullYear() === year;
+                    default:
+                        return true;
+                }
+            }
+
+            // Filter logic
+            function filterPayments() {
+                const term = searchInput.value.toLowerCase();
+                const date = dateFilter.value;
+
+                filteredRows = allRows.filter(row => {
+                    const inst = (row.dataset.institution || '').toLowerCase();
+                    const reference = (row.dataset.reference || '').toLowerCase();
+
+                    const matchesSearch = !term ||
+                        inst.includes(term) ||
+                        reference.includes(term);
+
+                    const matchesDate = isDateInRange(row.dataset.date, date);
+
+                    return matchesSearch && matchesDate;
+                });
+
+                updateStatistics(filteredRows);
+                currentPage = 1;
+                displayRows();
+            }
+
+            // Display rows with pagination
+            function displayRows() {
+                const perPage = 50; // Default per page
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
+
+                allRows.forEach(r => r.style.display = 'none');
+                filteredRows.slice(start, end).forEach(r => r.style.display = '');
+            }
+
+            // Payment details modal handler
+            document.querySelectorAll('.payment-details-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const paymentId = this.getAttribute('data-payment-id');
+                    // You would typically fetch payment details via AJAX here
+                    // For now, we'll display basic info
+                    const row = this.closest('tr');
+                    const institution = row.cells[1].textContent.trim();
+                    const amount = row.cells[2].textContent.trim();
+                    const currency = row.cells[3].textContent.trim();
+                    const reference = row.cells[4].textContent.trim();
+                    const method = row.cells[5].textContent.trim();
+                    const createdAt = row.cells[6].textContent.trim();
+
+                    const detailsContent = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Basic Information</h6>
+                                <p><strong>Institution:</strong> ${institution}</p>
+                                <p><strong>Amount:</strong> ${amount}</p>
+                                <p><strong>Currency:</strong> ${currency}</p>
+                                <p><strong>Reference Number:</strong> ${reference}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Payment Details</h6>
+                                <p><strong>Payment Method:</strong> ${method}</p>
+                                <p><strong>Created At:</strong> ${createdAt}</p>
+                                <p><strong>Payment ID:</strong> ${paymentId}</p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Additional Details</h6>
+                                <p class="text-muted">More payment information would be displayed here based on your backend implementation.</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('paymentDetailsContent').innerHTML = detailsContent;
+                });
+            });
+
+            // Form submission handler with AJAX
+            createPaymentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Disable submit button to prevent multiple submissions
+                createPaymentBtn.disabled = true;
+                createPaymentBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating...';
+                
+                const formData = new FormData(this);
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Check if payment creation was successful
+                    if (data.success || data.id) {
+                        // Show success message
+                        showAlert('Payment created successfully!', 'success');
+                        
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('createPaymentModal'));
+                        modal.hide();
+                        
+                        // Refresh the page after a short delay to show the success message
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        throw new Error(data.error || 'Payment creation failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error creating payment: ' + error.message, 'danger');
+                    
+                    // Re-enable submit button
+                    createPaymentBtn.disabled = false;
+                    createPaymentBtn.innerHTML = 'Create Payment';
+                });
+            });
+
+            // Show alert function
+            function showAlert(message, type) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                
+                // Insert at the top of the container
+                const container = document.querySelector('.container-fluid');
+                container.insertBefore(alertDiv, container.firstChild);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+
+            // Reset form when modal is closed
+            document.getElementById('createPaymentModal').addEventListener('hidden.bs.modal', function () {
+                createPaymentForm.reset();
+                createPaymentBtn.disabled = false;
+                createPaymentBtn.innerHTML = 'Create Payment';
+            });
+
+            // Event Listeners
+            searchInput.addEventListener('input', filterPayments);
+            dateFilter.addEventListener('change', filterPayments);
+
+            // Initial load
+            updateStatistics(allRows);
+            displayRows();
+        });
+
+        // Helper Functions
+        function clearFilters() {
+            document.getElementById('searchPayments').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('searchPayments').dispatchEvent(new Event('input'));
+        }
+
+        function refreshPage() {
+            location.reload();
+        }
+
+        // Check if we should show success message from URL parameter
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment_created') === 'success') {
+                showAlert('Payment created successfully!', 'success');
+                
+                // Remove the parameter from URL without refreshing
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        });
+
+        // Global showAlert function
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            const existingAlerts = container.querySelector('.alert');
+            if (existingAlerts) {
+                container.insertBefore(alertDiv, existingAlerts);
+            } else {
+                container.insertBefore(alertDiv, container.firstChild);
+            }
+            
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+{% endblock %}

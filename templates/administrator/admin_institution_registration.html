@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% block title %}Institution Registration Tokens{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+    
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible bide show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 text-white mb-1">Institution Registration Tokens</h1>
+                        <p class="text-muted mb-0">Manage institution registration tokens</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary fs-6">Total Tokens: {{ tokens|length }}</span>
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#generateTokenModal">
+                            <i class="bi bi-plus me-1"></i>Generate Token
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshPage()">
+                            <i class="bi bi-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if tokens %}
+            {# Filters and Search - Omitted for simplicity, can be added later if needed #}
+
+            {# Statistics Cards - Omitted for simplicity, can be added later if needed #}
+
+            <!-- Tokens Table -->
+            <div class="card">
+                <div class="card-header bg-gray">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 text-white">Institution Registration Tokens</h5>
+                        <div class="d-flex gap-2">
+                       
+
+                            {# Add cleanup expired tokens button if applicable #}
+                           <a href="/super/clear/institution/registration/token">
+                                <button class="btn btn-outline-danger btn-sm" onclick="cleanupExpiredSignupTokens()">
+                                    <i class="bi bi-trash me-1"></i>Clear
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Search and Filter Controls -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchTokens" placeholder="Search by email or token...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="dateFilter">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="text-muted small mt-2">
+                                Showing <span id="visibleCount">{{ tokens|length }}</span> of <span id="totalCount">{{ tokens|length }}</span> entries
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="signupTokensTable">
+                            <thead class="table-dark ">
+                                <tr>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;">
+                                        <small>ID</small>
+                                    </th>
+                                    <th class="px-3 py-3">
+                                        <small>User</small>
+                                    </th>
+                                    <th class="px-3 py-3">
+                                        <small>Token</small>
+                                    </th>
+                                      <th class="px-3 py-3">
+                                        <small>Used</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center">
+                                        <small>Created At</small>
+                                    </th>
+                                      <th class="px-3 py-3 text-center">
+                                        <small>Expiry Date</small>
+                                    </th>
+                                  
+
+                                </tr>
+                            </thead>
+                            <tbody id="signupTokensTableBody">
+                                {% for token in tokens %}
+                                <tr class="signup-token-row" 
+                                    data-email="{{ token.user.username|lower }}" 
+                                    data-token="{{ token.token|lower }}"
+                                    data-timestamp="{{ token.created_at.isoformat }}">
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">#{{ token.id }}</small>
+                                    </td>
+                                    
+                                    <td class="px-3 py-2">
+                                        {{ token.user }}
+                                    </td>
+                                    
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <code class="small bg-light px-2 py-1 rounded token-display flex-grow-1" data-token="{{ token.token }}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                {{ token.token|truncatechars:20 }}...
+                                            </code>
+                                            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToken('{{ token.token }}')" title="Copy full token">
+                                                <i class="bi bi-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        {{ token.used }}
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">
+                                            {{ token.created_at|date:"M d, Y" }}<br>
+                                            {{ token.created_at|date:"H:i:s" }}
+                                        </small>
+                                    </td>
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">
+                                            {{ token.expiry_date|date:"M d, Y" }}<br>
+                                            {{ token.expiry_date|date:"H:i:s" }}
+                                        </small>
+                                    </td>
+                                    
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    <span id="noResultsMessage" style="display: none;">No tokens match your search criteria.</span>
+                </div>
+                <div id="paginationControls" class="d-flex gap-2">
+                    <!-- Pagination controls would go here -->
+                </div>
+            </div>
+
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                No signup tokens found.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Generate Token Modal -->
+    <div class="modal fade" id="generateTokenModal" tabindex="-1" aria-labelledby="generateTokenModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generateTokenModalLabel">Generate New Registration Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="generateTokenForm" action="http://127.0.0.1:8000/institution/api/registration/token/create" method="POST">
+                    
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="emailInput" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="emailInput" name="email" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Generate Token</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# Add JavaScript for copy functionality and potentially other actions #}
+    <script>
+        // Initialize search and filter functionality when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchTokens');
+            const dateFilter = document.getElementById('dateFilter');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', filterTokens);
+            }
+            if (dateFilter) {
+                dateFilter.addEventListener('change', filterTokens);
+            }
+        });
+
+        function filterTokens() {
+            const searchTerm = document.getElementById('searchTokens').value.toLowerCase();
+            const dateFilter = document.getElementById('dateFilter').value;
+            const rows = document.querySelectorAll('.signup-token-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const email = row.getAttribute('data-email');
+                const token = row.getAttribute('data-token');
+                const timestamp = new Date(row.getAttribute('data-timestamp'));
+                
+                let matchesSearch = true;
+                let matchesDate = true;
+
+                // Search filter
+                if (searchTerm) {
+                    matchesSearch = email.includes(searchTerm) || token.includes(searchTerm);
+                }
+
+                // Date filter
+                if (dateFilter) {
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+
+                    switch (dateFilter) {
+                        case 'today':
+                            matchesDate = timestamp >= today;
+                            break;
+                        case 'week':
+                            matchesDate = timestamp >= weekAgo;
+                            break;
+                        case 'month':
+                            matchesDate = timestamp >= monthAgo;
+                            break;
+                    }
+                }
+
+                const shouldShow = matchesSearch && matchesDate;
+                
+                if (shouldShow) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update visible count
+            document.getElementById('visibleCount').textContent = visibleCount;
+            
+            // Show/hide no results message
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            if (visibleCount === 0 && (searchTerm.length > 0 || dateFilter)) {
+                noResultsMessage.style.display = 'block';
+            } else {
+                noResultsMessage.style.display = 'none';
+            }
+        }
+
+        function copyToken(token) {
+            navigator.clipboard.writeText(token).then(function() {
+                // Optional: Provide user feedback, e.g., change button icon or show a tooltip
+                console.log("Token copied to clipboard");
+            }, function(err) {
+                console.error("Could not copy token: ", err);
+            });
+        }
+
+        function refreshPage() {
+            window.location.reload();
+        }
+
+        // Handle form submission
+        document.getElementById("generateTokenForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const email = formData.get("email");
+
+            fetch(form.action, {
+                method: form.method,
+                headers: {
+                    "Content-Type": "application/json",
+                    // Add CSRF token if your Django setup requires it
+                    "X-CSRFToken": getCookie("csrftoken"), 
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Success:", data);
+                // Handle success, e.g., close modal, show message, refresh table
+                const modalElement = document.getElementById("generateTokenModal");
+                const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                modal.hide();
+                refreshPage(); // Refresh the page to show the new token
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                // Handle errors, e.g., show error message to user
+                alert("Error generating token: " + error.message);
+            });
+        });
+
+        // Function to get CSRF token (if needed)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+    </script>
+
+{% endblock %}
+

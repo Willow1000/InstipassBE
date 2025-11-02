@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstiPass - Demo Session Rescheduled</title>
+    <style>
+        /* Email-safe CSS styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #2A9D8F 0%, #264653 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .email-logo {
+            width: 150px;
+            height: 60px;
+            margin-bottom: 15px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        
+        .email-content {
+            padding: 30px;
+        }
+        
+        h2 {
+            color: #2A9D8F;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            color: #264653;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        h4 {
+            color: #2A9D8F;
+            margin: 20px 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        p {
+            margin: 0 0 15px 0;
+            color: #555555;
+        }
+        
+        .update-container {
+            background-color: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .security-notice {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .security-notice h4 {
+            margin-top: 0;
+            color: #f57c00;
+        }
+        
+        .security-notice p {
+            margin-bottom: 0;
+        }
+        
+        .calendar-invite {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .calendar-invite p {
+            margin-bottom: 10px;
+            color: #0369a1;
+            font-weight: 600;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background-color: #2A9D8F;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #238a7a;
+        }
+        
+        a {
+            color: #2A9D8F;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .info-section {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-item {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .info-icon {
+            display: table-cell;
+            width: 40px;
+            vertical-align: top;
+            color: #2A9D8F;
+            font-size: 20px;
+            text-align: center;
+            padding-right: 15px;
+        }
+        
+        .info-content {
+            display: table-cell;
+            vertical-align: top;
+        }
+        
+        .info-content strong {
+            color: #264653;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-content p {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .footer-signature {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #777777;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .email-header, .email-content {
+                padding: 20px;
+            }
+            
+            .email-header h1 {
+                font-size: 24px;
+            }
+            
+            .info-item {
+                display: block;
+            }
+            
+            .info-icon {
+                display: block;
+                width: auto;
+                text-align: left;
+                padding-right: 0;
+                margin-bottom: 5px;
+            }
+            
+            .info-content {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+            <h1>Demo Session Update</h1>
+        </div>
+        
+        <!-- Content -->
+        <div class="email-content">
+            <h2>Demo Session Rescheduled</h2>
+            
+            <p>We're reaching out to inform you that your InstiPass demonstration session has been rescheduled.</p>
+            
+            <div class="update-container">
+                <div style="font-size: 48px; margin-bottom: 15px;">📅</div>
+                <h3>New Schedule Details</h3>
+                <p><strong>Date:</strong> [Date]</p>
+                <p><strong>Time:</strong> [Time]</p>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div class="info-section">
+                <div class="info-item">
+                    <div class="info-icon">📌</div>
+                    <div class="info-content">
+                        <strong>Meeting Link</strong>
+                        <p>The meeting link remains the same. If you need a new link, please contact our team.</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">📝</div>
+                    <div class="info-content">
+                        <strong>Preparation</strong>
+                        <p>Please review the demo materials sent previously and prepare any questions you may have.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="calendar-invite">
+                <p>Add this demo session to your calendar:</p>
+                <a href=[calendar_link] class="btn btn-primary">Add to Google Calendar</a>
+            </div>
+            
+            <div class="security-notice">
+                <h4>Need to Reschedule?</h4>
+                <p>If this new time doesn't work for you, please reply to this email or contact us at <a href="mailto:demos@instipass.com">demos@instipass.com</a> to arrange a more suitable time.</p>
+            </div>
+            
+            <p>We apologize for any inconvenience this change may cause and look forward to demonstrating InstiPass to you.</p>
+            
+            <div class="footer-signature">
+                <p>Best regards,<br>
+                The InstiPass Team</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

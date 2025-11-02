@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Transaction {{ transaction.id }}{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Breadcrumb & Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                              
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Transaction #{{ transaction.id }}</li>
+                        </ol>
+                    </nav>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'admin_payments_view' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i> Back
+                        </a>
+                      
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Detail Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0 text-dark">
+                    <i class="bi bi-credit-card-2-front text-primary me-2"></i>
+                    Transaction Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- Left Column -->
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-hash text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Transaction ID</p>
+                                <p class="mb-0 fw-medium">#{{ transaction.id }}</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-cash-stack text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Amount</p>
+                                <p class="mb-0 fw-medium">
+                                     {{ transaction.amount }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-credit-card text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Payment Method</p>
+                                <p class="mb-0 fw-medium text-capitalize">{{ transaction.method|lower }}</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-calendar-check text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Processed At</p>
+                                <p class="mb-0 fw-medium">
+                                    {{ transaction.processed_at|date:"M d, Y" }} at {{ transaction.processed_at|time:"H:i:s" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-upc-scan text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Reference Number</p>
+                                <p class="mb-0 fw-medium">
+                                    {% if transaction.reference_number %}
+                                        {{ transaction.reference_number }}
+                                    {% else %}
+                                        <span class="text-muted fst-italic">Not provided</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-globe text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Currency</p>
+                                <p class="mb-0 fw-medium">{{ transaction.get_currency_display }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Status Badge -->
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-patch-check text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Status</p>
+                                {% with payment=transaction.payment_set.first %}
+                                    {% if payment %}
+                                        {% if payment.status == 'SUCCESS' %}
+                                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Success</span>
+                                        {% elif payment.status == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending</span>
+                                        {% elif payment.status == 'REFUNDED' %}
+                                            <span class="badge bg-danger"><i class="bi bi-arrow-counterclockwise me-1"></i>Refunded</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ payment.get_status_display }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">No Payment Linked</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+
+                        <!-- Related Institution -->
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-building text-primary me-2 fs-4"></i>
+                            <div>
+                                <p class="mb-0 small text-muted">Institution</p>
+                                {% with payment=transaction.payment_set.first %}
+                                    {% if payment and payment.institution %}
+                                        <a href="{% url 'institution_admin_detail' payment.institution.id %}"
+                                           class="fw-medium text-primary text-decoration-none">
+                                            {{ payment.institution.name }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted fst-italic">Not linked</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gateway Response (JSON) Card -->
+        {% if transaction.gateway_response %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-dark">
+                        <i class="bi bi-cloud-arrow-up text-info me-2"></i>
+                        Gateway Response
+                    </h5>
+                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#gatewayResponse" aria-expanded="false">
+                        <i class="bi bi-eye me-1"></i>Show
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="collapse" id="gatewayResponse">
+                        <pre class="bg-light p-3 rounded small" style="max-height: 400px; overflow-y: auto;">
+                            {{ transaction.gateway_response | pprint }}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Linked Payments -->
+        
+    <!-- Optional: Pretty Print JSON in pre tag -->
+    <style>
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+{% endblock %}

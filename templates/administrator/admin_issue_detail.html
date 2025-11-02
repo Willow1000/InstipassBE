@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %} Issue {{ issue.id }} {% endblock %}
+{% block content %}
+{% include "admin_nav.html" %}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header with Back Button and Mark as Resolved Button -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 text-white mb-0">
+          <i class="fas fa-exclamation-triangle text-primary me-2"></i>Issue Details
+        </h1>
+        <div class="d-flex gap-2">
+          {% if issue.assigned_to and user.is_authenticated and user.id == issue.assigned_to.id and issue.status != 'resolved' %}
+            <a href="{% url 'issue_resolved' %}?issue_id={{ issue.id }}" class="btn btn-success">
+              <i class="fas fa-check-circle me-2"></i>Mark Issue Resolved
+            </a>
+          {% endif %}
+          <a href="{% url 'admin_issue_view' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Issues
+          </a>
+        </div>
+      </div>
+
+      <!-- Issue Card -->
+      <div class="card shadow-sm mb-3 border-0 rounded-3">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <div class="d-flex align-items-center">
+                <div class="bg-{% if issue.status == 'open' %}danger{% elif issue.status == 'in_progress' %}warning{% elif issue.status == 'resolved' %}success{% else %}secondary{% endif %} text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                     style="width: 50px; height: 50px; font-size: 20px;"
+                     role="img" 
+                     aria-label="Issue type: {{ issue.get_issue_type_display }}, Status: {{ issue.get_status_display }}">
+                  <i class="fas fa-{% if issue.issue_type == 'bug' %}bug{% elif issue.issue_type == 'payment' %}credit-card{% elif issue.issue_type == 'template' %}id-card{% elif issue.issue_type == 'fraud' %}shield-alt{% else %}question{% endif %}" 
+                     aria-hidden="true"></i>
+                </div>
+                <div>
+                  <h4 class="fw-medium mb-1" id="institution-name">{{ issue.institution.name }}</h4>
+                  <div class="mb-1">
+                    <span class="badge bg-{% if issue.issue_type == 'bug' %}danger{% elif issue.issue_type == 'payment' %}info{% elif issue.issue_type == 'template' %}primary{% elif issue.issue_type == 'fraud' %}warning{% else %}secondary{% endif %} me-2"
+                          role="status"
+                          aria-label="Issue type">
+                      {{ issue.get_issue_type_display }}
+                    </span>
+                    <span class="badge bg-{% if issue.status == 'open' %}danger{% elif issue.status == 'in_progress' %}warning{% elif issue.status == 'resolved' %}success{% else %}secondary{% endif %}"
+                          role="status"
+                          aria-label="Issue status">
+                      {{ issue.get_status_display }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-auto">
+              <span class="badge bg-primary" role="text" aria-label="Issue number">Issue #{{ issue.id }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body pt-2">
+          <div class="row">
+            <div class="col-md-9">
+              <!-- Issue Description -->
+              <div class="issue-content mb-4">
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-info-circle me-1" aria-hidden="true"></i>Issue Description:
+                </h6>
+                <div class="bg-dark text-white p-3 rounded border-start border-primary border-4">
+                  <p class="card-text mb-0" 
+                     style="line-height: 1.6; white-space: pre-line; word-wrap: break-word;"
+                     role="article"
+                     aria-labelledby="institution-name">
+                    {{ issue.description }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Attachment Section -->
+              {% if issue.attachment %}
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-paperclip me-1" aria-hidden="true"></i>Attachment:
+                </h6>
+                <div class="d-flex align-items-center bg-dark text-white p-3 rounded border">
+                  <i class="fas fa-file text-primary me-3" style="font-size: 24px;" aria-hidden="true"></i>
+                  <div class="flex-grow-1">
+                    <a href="{{ issue.attachment.url }}" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="text-decoration-none fw-medium d-block"
+                       aria-describedby="attachment-help">
+                      {{ issue.attachment.name|slice:"17:" }}
+                    </a>
+                    <div class="text-muted small" id="attachment-help">
+                      <i class="fas fa-external-link-alt me-1" aria-hidden="true"></i>Click to view attachment in new tab
+                    </div>
+                  </div>
+                  <div class="ms-2">
+                    <span class="badge bg-secondary">
+                      <i class="fas fa-download me-1" aria-hidden="true"></i>Download
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Assignment Section -->
+              {% if issue.assigned_to %}
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-user-check me-1" aria-hidden="true"></i>Assigned To:
+                </h6>
+                <div class="d-flex align-items-center bg-dark text-white p-3 rounded border">
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                       style="width: 40px; height: 40px;"
+                       role="img"
+                       aria-label="Assigned user avatar">
+                    <span aria-hidden="true">{{ issue.assigned_to.first_name|first|upper }}{{ issue.assigned_to.last_name|first|upper }}</span>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="fw-medium">{{ issue.assigned_to.get_full_name|default:issue.assigned_to.username }}</div>
+                    <div class="text-muted small">
+                      <i class="fas fa-envelope me-1" aria-hidden="true"></i>{{ issue.assigned_to.email }}
+                    </div>
+                  </div>
+                  <div class="ms-2">
+                    <span class="badge bg-success">
+                      <i class="fas fa-check-circle me-1" aria-hidden="true"></i>Assigned
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-user-times me-1" aria-hidden="true"></i>Assignment Status:
+                </h6>
+                <div class="bg-dark text-white p-3 rounded border border-warning">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle text-warning me-2" aria-hidden="true"></i>
+                    <span class="text-muted">
+                      Not assigned to anyone yet
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Priority Indicator (New Enhancement) -->
+              <div class="mb-4">
+                <h6 class="text-muted mb-2">
+                  <i class="fas fa-flag me-1" aria-hidden="true"></i>Priority Level:
+                </h6>
+                <div class="d-flex align-items-center">
+                  {% if issue.status == 'open' and not issue.assigned_to %}
+                    <span class="badge bg-danger me-2">
+                      <i class="fas fa-exclamation me-1" aria-hidden="true"></i>High Priority
+                    </span>
+                    <small class="text-muted">Unassigned open issue requires immediate attention</small>
+                  {% elif issue.issue_type == 'fraud' %}
+                    <span class="badge bg-danger me-2">
+                      <i class="fas fa-shield-alt me-1" aria-hidden="true"></i>Critical
+                    </span>
+                    <small class="text-muted">Security-related issue</small>
+                  {% elif issue.issue_type == 'payment' %}
+                    <span class="badge bg-warning me-2">
+                      <i class="fas fa-credit-card me-1" aria-hidden="true"></i>High
+                    </span>
+                    <small class="text-muted">Payment-related issue</small>
+                  {% else %}
+                    <span class="badge bg-info me-2">
+                      <i class="fas fa-info-circle me-1" aria-hidden="true"></i>Normal
+                    </span>
+                    <small class="text-muted">Standard priority</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Sidebar with Metadata -->
+            <div class="col-md-3">
+              <div class="bg-dark text-white p-3 rounded border h-100">
+                <h6 class="text-muted mb-3 border-bottom pb-2">
+                  <i class="fas fa-info-circle me-1" aria-hidden="true"></i>Issue Information
+                </h6>
+                
+                <div class="mb-3">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-calendar-plus me-1" aria-hidden="true"></i>
+                    <strong>Created:</strong>
+                  </small>
+                  <div class="small">
+                    {{ issue.created_at|date:"M d, Y" }} at {{ issue.created_at|date:"g:i A" }}
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-hashtag me-1" aria-hidden="true"></i>
+                    <strong>Issue ID:</strong>
+                  </small>
+                  <div class="small font-monospace">#{{ issue.id }}</div>
+                </div>
+                
+                <div class="mb-3">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-tag me-1" aria-hidden="true"></i>
+                    <strong>Type:</strong>
+                  </small>
+                  <div class="small">{{ issue.get_issue_type_display }}</div>
+                </div>
+                
+                <div class="mb-3">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-traffic-light me-1" aria-hidden="true"></i>
+                    <strong>Status:</strong>
+                  </small>
+                  <div class="small">{{ issue.get_status_display }}</div>
+                </div>
+                
+                <div class="mb-3">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-building me-1" aria-hidden="true"></i>
+                    <strong>Institution:</strong>
+                  </small>
+                  <div class="small">{{ issue.institution.name }}</div>
+                </div>
+                
+                {% if issue.assigned_to %}
+                <div class="mb-3">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-user me-1" aria-hidden="true"></i>
+                    <strong>Assigned to:</strong>
+                  </small>
+                  <div class="small">{{ issue.assigned_to.get_full_name|default:issue.assigned_to.username }}</div>
+                </div>
+                {% endif %}
+                
+                {% if issue.resolved_at %}
+                <div class="mb-3">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
+                    <strong>Resolved:</strong>
+                  </small>
+                  <div class="small">
+                    {{ issue.resolved_at|date:"M d, Y" }} at {{ issue.resolved_at|date:"g:i A" }}
+                  </div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-0">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-clock me-1" aria-hidden="true"></i>
+                    <strong>Last Updated:</strong>
+                  </small>
+                  <div class="small">
+                    {{ issue.updated_at|date:"M d, Y" }} at {{ issue.updated_at|date:"g:i A" }}
+                  </div>
+                </div>
+
+                <!-- Time Since Creation (New Enhancement) -->
+                <div class="mt-3 pt-3 border-top">
+                  <small class="text-muted d-block mb-1">
+                    <i class="fas fa-hourglass-half me-1" aria-hidden="true"></i>
+                    <strong>Age:</strong>
+                  </small>
+                  <div class="small">
+                    {{ issue.created_at|timesince }} ago
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Footer (New Enhancement) -->
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-2">
+              {% if issue.status == 'open' %}
+                <a href="{% url 'admin_accept_issue' %}?issue_id={{ issue.id }}" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Mark as resolved">
+                  <i class="fas fa-check me-1" aria-hidden="true"></i>Accept Issue
+                </a>
+              {% endif %}
+              
+              <!-- <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Add comment or note">
+                <i class="fas fa-comment me-1" aria-hidden="true"></i>Comment
+              </button> -->
+            </div>
+            <div>
+              <small class="text-muted">
+                <i class="fas fa-eye me-1" aria-hidden="true"></i>
+                Last viewed: <span id="last-viewed-time">Just now</span>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Initialize tooltips -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Bootstrap tooltips
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+  
+  // Update last viewed time
+  function updateLastViewedTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    document.getElementById('last-viewed-time').textContent = timeString;
+  }
+  
+  // Update time every minute
+  setInterval(updateLastViewedTime, 60000);
+});
+</script>
+
+{% endblock %}
+
+
+

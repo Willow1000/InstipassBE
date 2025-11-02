@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+{% block title %}API Access Logs{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+    
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div> 
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 mb-1 ">API Access Logs</h1>
+                        <p class="text-muted mb-0">Monitor and analyze API endpoint usage</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary fs-6">Total Logs: {{ logs|length }}</span>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshPage()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if logs %}
+            <!-- Filters and Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchLogs" placeholder="Search logs...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Method</label>
+                            <select class="form-select" id="methodFilter">
+                                <option value="">All Methods</option>
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="PATCH">PATCH</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="2xx">2xx Success</option>
+                                <option value="3xx">3xx Redirect</option>
+                                <option value="4xx">4xx Client Error</option>
+                                <option value="5xx">5xx Server Error</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Date Range</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+ 
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                               Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-success bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <h5 class="card-title text-success" id="successCount">0</h5>
+                            <p class="card-text text-muted small">Successful Requests</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-warning bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-2"></i>
+                            <h5 class="card-title text-warning" id="errorCount">0</h5>
+                            <p class="card-text text-muted small">Client Errors</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-danger bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-times-circle text-danger fa-2x mb-2"></i>
+                            <h5 class="card-title text-danger" id="serverErrorCount">0</h5>
+                            <p class="card-text text-muted small">Server Errors</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-info bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-globe text-info fa-2x mb-2"></i>
+                            <h5 class="card-title text-info" id="uniqueIpCount">0</h5>
+                            <p class="card-text text-muted small">Unique IPs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Table -->
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark">Access Logs</h5>
+                        <div class="d-flex gap-2">
+                            
+                            <a href="/super/clear/apiaccess">
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash me-1"></i>Clear All
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="logsTable">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;">
+                                        <small>ID</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 80px;">
+                                        <small>User</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 120px;">
+                                        <small>IP Address</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 200px;">
+                                        <small>Endpoint</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 80px;">
+                                        <small>Method</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 80px;">
+                                        <small>Status</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 150px;">
+                                        <small>Timestamp</small>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                {% for log in logs %}
+                                <tr class="log-row" 
+                                    data-method="{{ log.request_method }}" 
+                                    data-status="{{ log.status_code }}"
+                                    data-endpoint="{{ log.endpoint|lower }}"
+                                    data-ip="{{ log.ip_address }}"
+                                    data-user="{{ log.user_id }}"
+                                    data-timestamp="{{ log.request_timestamp|date:'Y-m-d H:i:s' }}">
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">#{{ log.id }}</small>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        {% if log.user_id %}
+                                            <span class="badge bg-primary">{{ log.user_id }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <code class="small bg-light px-2 py-1 rounded">{{ log.ip_address }}</code>
+                                    </td>
+                                    
+                                    <td class="px-3 py-2">
+                                        <code class="small endpoint-code">{{ log.endpoint }}</code>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <span class="badge {% if log.request_method == 'GET' %}bg-info{% elif log.request_method == 'POST' %}bg-success{% elif log.request_method == 'PUT' %}bg-warning{% elif log.request_method == 'DELETE' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                            {{ log.request_method }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <span class="badge 
+                                            {% if log.status_code >= 200 and log.status_code < 300 %}bg-success
+                                            {% elif log.status_code >= 400 and log.status_code < 500 %}bg-warning  
+                                            {% elif log.status_code >= 500 %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ log.status_code }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">
+                                            {{ log.request_timestamp|date:"M d, Y" }}<br>
+                                            {{ log.request_timestamp|date:"H:i:s" }}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    Showing <span id="showingCount">{{ logs|length }}</span> of {{ logs|length }} entries
+                </div>
+                <div id="paginationControls" class="d-flex gap-2">
+                    <!-- Pagination controls would go here -->
+                </div>
+            </div>
+
+        {% elif no_results %}
+            <!-- No Search Results -->
+            <div class="text-center py-5">
+                <div class="text-muted">
+                    <i class="fas fa-search fa-4x mb-4 text-secondary"></i>
+                    <h3>No Results Found</h3>
+                    <p class="lead">Your search didn't match any logs. Try adjusting your search criteria.</p>
+                    <button class="btn btn-outline-primary" onclick="clearFilters()">Clear Filters</button>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="text-muted">
+                    <i class="fas fa-clipboard-list fa-4x mb-4 text-secondary"></i>
+                    <h3>No API Logs Found</h3>
+                    <p class="lead">API access logs will appear here once your endpoints start receiving requests.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Initialize statistics
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            attachFilterListeners();
+        });
+
+        function updateStatistics() {
+            const rows = document.querySelectorAll('.log-row');
+            let successCount = 0;
+            let errorCount = 0;
+            let serverErrorCount = 0;
+            const uniqueIps = new Set();
+
+            rows.forEach(row => {
+                const status = parseInt(row.dataset.status);
+                const ip = row.dataset.ip;
+                
+                uniqueIps.add(ip);
+                
+                if (status >= 200 && status < 300) {
+                    successCount++;
+                } else if (status >= 400 && status < 500) {
+                    errorCount++;
+                } else if (status >= 500) {
+                    serverErrorCount++;
+                }
+            });
+
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('serverErrorCount').textContent = serverErrorCount;
+            document.getElementById('uniqueIpCount').textContent = uniqueIps.size;
+        }
+
+        function attachFilterListeners() {
+            document.getElementById('searchLogs').addEventListener('input', filterLogs);
+            document.getElementById('methodFilter').addEventListener('change', filterLogs);
+            document.getElementById('statusFilter').addEventListener('change', filterLogs);
+            document.getElementById('dateFilter').addEventListener('change', filterLogs);
+        }
+
+        function filterLogs() {
+            const searchTerm = document.getElementById('searchLogs').value.toLowerCase();
+            const methodFilter = document.getElementById('methodFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            const rows = document.querySelectorAll('.log-row');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const method = row.dataset.method;
+                const status = parseInt(row.dataset.status);
+                const endpoint = row.dataset.endpoint;
+                const ip = row.dataset.ip;
+                const user = row.dataset.user;
+                const timestamp = new Date(row.dataset.timestamp);
+                
+                // Search filter
+                const matchesSearch = searchTerm === '' || 
+                                     endpoint.includes(searchTerm) || 
+                                     ip.includes(searchTerm) ||
+                                     (user && user.toLowerCase().includes(searchTerm));
+                
+                // Method filter
+                const matchesMethod = methodFilter === '' || method === methodFilter;
+                
+                // Status filter
+                let matchesStatus = true;
+                if (statusFilter !== '') {
+                    if (statusFilter === '2xx') {
+                        matchesStatus = status >= 200 && status < 300;
+                    } else if (statusFilter === '3xx') {
+                        matchesStatus = status >= 300 && status < 400;
+                    } else if (statusFilter === '4xx') {
+                        matchesStatus = status >= 400 && status < 500;
+                    } else if (statusFilter === '5xx') {
+                        matchesStatus = status >= 500;
+                    }
+                }
+                
+                // Date filter
+                let matchesDate = true;
+                if (dateFilter !== '') {
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    
+                    if (dateFilter === 'today') {
+                        matchesDate = timestamp >= today;
+                    } else if (dateFilter === 'week') {
+                        const weekStart = new Date(now);
+                        weekStart.setDate(now.getDate() - now.getDay());
+                        weekStart.setHours(0, 0, 0, 0);
+                        matchesDate = timestamp >= weekStart;
+                    } else if (dateFilter === 'month') {
+                        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                        matchesDate = timestamp >= monthStart;
+                    }
+                }
+                
+                if (matchesSearch && matchesMethod && matchesStatus && matchesDate) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('showingCount').textContent = visibleCount;
+            updateStatistics();
+        }
+        
+        function updatePagination() {
+            // Pagination logic would go here
+        }
+        
+        function clearFilters() {
+            document.getElementById('searchLogs').value = '';
+            document.getElementById('methodFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            filterLogs();
+        }
+        
+        function refreshPage() {
+            window.location.reload();
+        }
+    </script>
+
+    <style>
+        /* Dark mode styles for this specific page */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                color: #e0e0e0;
+            }
+            
+            .text-muted {
+                color: #a0a0a0 !important;
+            }
+            
+            .card {
+                background-color: #1e1e1e;
+                border-color: #333333;
+            }
+            
+            .card-header {
+                background-color: #2d2d2d !important;
+                border-color: #333333;
+            }
+            
+            .table {
+                color: #e0e0e0;
+            }
+            
+            .table-hover tbody tr:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+            
+            .form-control, .form-select {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #e0e0e0;
+            }
+            
+            .input-group-text {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #a0a0a0;
+            }
+            
+            .btn-outline-secondary {
+                color: #a0a0a0;
+                border-color: #444444;
+            }
+            
+            .btn-outline-secondary:hover {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-primary {
+                color: #3d8bfd;
+                border-color: #3d8bfd;
+            }
+            
+            .btn-outline-primary:hover {
+                background-color: rgba(61, 139, 253, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-danger {
+                color: #dc3545;
+                border-color: #dc3545;
+            }
+            
+            .btn-outline-danger:hover {
+                background-color: rgba(220, 53, 69, 0.2);
+                color: #e0e0e0;
+            }
+            
+            code {
+                background-color: #2d2d2d !important;
+                color: #e83e8c;
+            }
+            
+            .endpoint-code {
+                color: #e0e0e0 !important;
+            }
+            
+            .bg-light {
+                background-color: #2d2d2d !important;
+            }
+            
+            /* Adjust opacity for better visibility */
+            .bg-opacity-10 {
+                --bs-bg-opacity: 0.2 !important;
+            }
+            
+            /* Ensure table headers are visible */
+            .table-dark {
+                background-color: #2d2d2d;
+            }
+            
+            /* Ensure the close button is visible */
+            .btn-close {
+                filter: invert(1) grayscale(100%) brightness(200%);
+            }
+        }
+    </style>
+{% endblock %}

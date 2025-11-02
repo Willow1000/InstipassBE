@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstiPass Contact Confirmation</title>
+    <style>
+        /* Email-safe CSS styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        
+        :root {
+            --primary: #2A9D8F;
+            --secondary: #1D3557;
+            --accent: #E76F51;
+            --warning: #F4A261;
+            --success: #4CAF50;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #2A9D8F 0%, #264653 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .email-logo {
+            width: 150px;
+            height: 60px;
+            margin-bottom: 15px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        
+        .email-body {
+            padding: 30px;
+        }
+        
+        h2 {
+            color: #2A9D8F;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            color: #264653;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        h4 {
+            color: #2A9D8F;
+            margin: 20px 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        p {
+            margin: 0 0 15px 0;
+            color: #555555;
+        }
+        
+        .confirmation-container {
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+        }
+        
+        .confirmation-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .message-preview {
+            background-color: #f5f5f5;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .message-preview p {
+            font-style: italic;
+            color: #555;
+            margin: 0;
+        }
+        
+        .expected-response {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .expected-response h4 {
+            margin-top: 0;
+        }
+        
+        .contact-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .contact-info h4 {
+            margin-top: 0;
+        }
+        
+        .contact-method {
+            display: table;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .contact-icon {
+            display: table-cell;
+            width: 30px;
+            vertical-align: middle;
+            color: var(--primary);
+            padding-right: 10px;
+        }
+        
+        .contact-method span:last-child {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666666;
+            font-size: 14px;
+        }
+        
+        .email-footer p {
+            margin: 5px 0;
+        }
+        
+        .social-links {
+            margin: 10px 0;
+        }
+        
+        .social-links a {
+            color: #2A9D8F;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        
+        .social-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .email-header, .email-body {
+                padding: 20px;
+            }
+            
+            .email-header h1 {
+                font-size: 24px;
+            }
+            
+            .contact-method {
+                display: block;
+            }
+            
+            .contact-icon {
+                display: inline-block;
+                width: auto;
+            }
+            
+            .contact-method span:last-child {
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+            <h1>Thank You for Contacting Us</h1>
+        </div>
+        
+        <div class="email-body">
+            <h2>Hello {{ user_name|default:"there" }},</h2>
+            
+            <p>Thank you for reaching out to the InstiPass team. We have received your message and appreciate you taking the time to contact us.</p>
+            
+            <div class="confirmation-container">
+                <div class="confirmation-icon">📨</div>
+                <h3>Your message has been received!</h3>
+                <p>Reference number: <strong>{{ reference_number|default:"#" }}{{ ticket_id|default:"000000" }}</strong></p>
+            </div>
+            
+            <div class="expected-response">
+                <h4>What happens next?</h4>
+                <p>Our team will review your inquiry and respond as soon as possible. We typically respond within <strong>24-48 hours</strong> during business days.</p>
+                <p>Please keep this email for your records. If you need to follow up, please reference the number above.</p>
+            </div>
+            
+            <div class="contact-info">
+                <h4>Need immediate assistance?</h4>
+                <div class="contact-method">
+                    <span class="contact-icon">📞</span>
+                    <span>Call our support line: (555) 123-4567</span>
+                </div>
+                <div class="contact-method">
+                    <span class="contact-icon">🕒</span>
+                    <span>Support hours: Monday-Friday, 9:00 AM - 5:00 PM</span>
+                </div>
+                <div class="contact-method">
+                    <span class="contact-icon">📍</span>
+                    <span>Visit our help desk: Student Center, Room 101</span>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p>Thank you for your patience,<br>The InstiPass Support Team</p>
+        </div>
+        
+        <div class="email-footer">
+            <p>&copy; 2025 InstiPass. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+            <p>This is an automated response. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

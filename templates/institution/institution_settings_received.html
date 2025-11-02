@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InstiPass Settings Received{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* InstiPass theme colors and styling from base template */
+        :root {
+            --primary: #2A9D8F;
+            --secondary: #1D3557;
+            --accent: #E76F51;
+            --warning: #F4A261;
+            --success: #4CAF50;
+        }
+        
+        /* Settings received specific styles */
+        .settings-container {
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+        }
+        
+        .settings-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .settings-details {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .settings-category {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .settings-category:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        
+        .settings-category-title {
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .settings-category-icon {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        
+        .settings-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+        
+        .settings-item-icon {
+            margin-right: 10px;
+            color: var(--primary);
+            font-size: 16px;
+        }
+        
+        .next-steps {
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid var(--success);
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        
+        .cta-button:hover {
+            background-color: #238b7e;
+        }
+        
+        .cta-button.secondary {
+            background-color: var(--secondary);
+        }
+        
+        .cta-button.secondary:hover {
+            background-color: #162a45;
+        }
+        
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            {% block header %}
+            <img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+            <h1>Institution Settings Received</h1>
+            {% endblock %}
+        </div>
+        
+        <div class="email-body">
+            <h2>Hello {{ institution_name }} Team,</h2>
+            
+            <p>Thank you for submitting your institution settings preferences. We have successfully received your configuration.</p>
+            
+            <div class="settings-container">
+                <div class="settings-icon">⚙️</div>
+                <h3>Settings Preferences Received</h3>
+                <p>Submitted on: <strong>{{ submission_date|default:"June 2, 2025" }}</strong></p>
+            </div>
+            
+            <div class="settings-details">
+                <h4>Settings Summary</h4>
+                
+                {% if settings_categories %}
+                {% for category in settings_categories %}
+                <div class="settings-category">
+                    <div class="settings-category-title">
+                        <span class="settings-category-icon">{{ category.icon|default:"📋" }}</span>
+                        <span>{{ category.name }}</span>
+                    </div>
+                    
+                    {% for item in category.items %}
+                    <div class="settings-item">
+                        <span class="settings-item-icon">✓</span>
+                        <div>
+                            <strong>{{ item.name }}:</strong> {{ item.value }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="settings-category">
+                    <div class="settings-category-title">
+                        <span class="settings-category-icon">📋</span>
+                        <span>General Settings</span>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-item-icon">✓</span>
+                        <div>
+                            <p>Your institution settings preferences have been received and are being processed.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="next-steps">
+                <h4>What Happens Next?</h4>
+                <p>Our team will review your settings preferences and implement them for your institution. You will receive a confirmation once your settings have been applied.</p>
+                <p>This process typically takes <strong>1-2 business days</strong>.</p>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="#" class="cta-button">View Settings Dashboard</a>
+                <a href="#" class="cta-button secondary">Contact Support</a>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p>If you have any questions or need to make changes to your submitted settings, please contact our support team.</p>
+            
+            <p>Thank you for using InstiPass,<br>The InstiPass Team</p>
+        </div>
+        
+        <div class="email-footer">
+            {% block footer %}
+            <p>&copy; {% now "Y" %} InstiPass. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+            <p>You're receiving this email because your institution has submitted settings preferences to InstiPass.</p>
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

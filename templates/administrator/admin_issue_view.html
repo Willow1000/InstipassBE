@@ -1,0 +1,742 @@
+{% extends "base.html" %}
+{% block title %}Issue Management{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+    <style>
+        /* Custom colors for issue types */
+        .text-bug {
+            color: #dc3545;
+        }
+        .text-payment {
+            color: #fd7e14;
+        }
+        .text-template {
+            color: #6610f2;
+        }
+        .text-fraud {
+            color: #d63384;
+        }
+        .text-other {
+            color: #6c757d;
+        }
+        
+        /* Issue status styling */
+        .status-open {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+        }
+        
+        .status-in-progress {
+            background-color: rgba(13, 202, 240, 0.1);
+            border-left: 4px solid #0dcaf0;
+        }
+        
+        .status-resolved {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-left: 4px solid #198754;
+        }
+        
+        .status-rejected {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+        }
+        
+        /* Priority indicators */
+        .priority-critical {
+            border-left: 4px solid #dc3545 !important;
+            background-color: rgba(220, 53, 69, 0.05);
+        }
+        
+        .priority-high {
+            border-left: 4px solid #fd7e14 !important;
+            background-color: rgba(253, 126, 20, 0.05);
+        }
+        
+        .priority-medium {
+            border-left: 4px solid #ffc107 !important;
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+        
+        .priority-low {
+            border-left: 4px solid #198754 !important;
+            background-color: rgba(25, 135, 84, 0.05);
+        }
+        
+        .priority-very-low {
+            border-left: 4px solid #6c757d !important;
+            background-color: rgba(108, 117, 125, 0.05);
+        }
+        
+        /* Priority badges */
+        .badge-priority-critical {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-priority-high {
+            background-color: #fd7e14;
+            color: white;
+        }
+        
+        .badge-priority-medium {
+            background-color: #ffc107;
+            color: black;
+        }
+        
+        .badge-priority-low {
+            background-color: #198754;
+            color: white;
+        }
+        
+        .badge-priority-very-low {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        /* Dark mode styles for this specific page */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                color: #e0e0e0;
+            }
+            
+            .text-muted {
+                color: #a0a0a0 !important;
+            }
+            
+            .card {
+                background-color: #1e1e1e;
+                border-color: #333333;
+            }
+            
+            .card-header {
+                background-color: #2d2d2d !important;
+                border-color: #333333;
+            }
+            
+            .table {
+                color: #e0e0e0;
+            }
+            
+            .table-hover tbody tr:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+            
+            .status-open {
+                background-color: rgba(255, 193, 7, 0.2);
+                border-left: 4px solid #ffc107;
+            }
+            
+            .status-in-progress {
+                background-color: rgba(13, 202, 240, 0.2);
+                border-left: 4px solid #0dcaf0;
+            }
+            
+            .status-resolved {
+                background-color: rgba(25, 135, 84, 0.2);
+                border-left: 4px solid #198754;
+            }
+            
+            .status-rejected {
+                background-color: rgba(220, 53, 69, 0.2);
+                border-left: 4px solid #dc3545;
+            }
+            
+            .form-control, .form-select {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #e0e0e0;
+            }
+            
+            .input-group-text {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #a0a0a0;
+            }
+            
+            .btn-outline-secondary {
+                color: #a0a0a0;
+                border-color: #444444;
+            }
+            
+            .btn-outline-secondary:hover {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-primary {
+                color: #3d8bfd;
+                border-color: #3d8bfd;
+            }
+            
+            .btn-outline-primary:hover {
+                background-color: rgba(61, 139, 253, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-success {
+                color: #198754;
+                border-color: #198754;
+            }
+            
+            .btn-outline-success:hover {
+                background-color: rgba(25, 135, 84, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-danger {
+                color: #dc3545;
+                border-color: #dc3545;
+            }
+            
+            .btn-outline-danger:hover {
+                background-color: rgba(220, 53, 69, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-warning {
+                color: #ffc107;
+                border-color: #ffc107;
+            }
+            
+            .btn-outline-warning:hover {
+                background-color: rgba(255, 193, 7, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-info {
+                color: #0dcaf0;
+                border-color: #0dcaf0;
+            }
+            
+            .btn-outline-info:hover {
+                background-color: rgba(13, 202, 240, 0.2);
+                color: #e0e0e0;
+            }
+            
+            /* Adjust opacity for better visibility */
+            .bg-opacity-10 {
+                --bs-bg-opacity: 0.2 !important;
+            }
+            
+            /* Ensure table headers are visible */
+            .table-dark {
+                background-color: #2d2d2d;
+            }
+            
+            /* Ensure the close button is visible */
+            .btn-close {
+                filter: invert(1) grayscale(100%) brightness(200%);
+            }
+            
+            /* Custom colors for dark mode */
+            .text-bug {
+                color: #f5c2c7 !important;
+            }
+            
+            .text-payment {
+                color: #ffda6a !important;
+            }
+            
+            .text-template {
+                color: #a370f7 !important;
+            }
+            
+            .text-fraud {
+                color: #ea77ad !important;
+            }
+            
+            .text-other {
+                color: #a0a0a0 !important;
+            }
+            
+            /* Issue title links */
+            .issue-title {
+                color: #e0e0e0 !important;
+            }
+            
+            .issue-title:hover {
+                color: #3d8bfd !important;
+            }
+            
+            /* Card shadows */
+            .shadow-sm {
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5) !important;
+            }
+            
+            /* Modal styling */
+            .modal-content {
+                background-color: #1e1e1e;
+                border-color: #333333;
+            }
+            
+            .modal-header {
+                border-color: #333333;
+            }
+            
+            .modal-footer {
+                border-color: #333333;
+            }
+        }
+    </style>
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 mb-1">
+                            <i class="bi bi-exclamation-triangle text-warning me-3"></i>Issue Management
+                        </h1>
+                        <p class="text-muted mb-0">Track and resolve system issues</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-danger fs-6">Critical: <span id="critical-count">0</span></span>
+                        <span class="badge bg-warning fs-6">High: <span id="high-count">0</span></span>
+                        <span class="badge bg-info fs-6">Medium: <span id="medium-count">0</span></span>
+                        <span class="badge bg-success fs-6">Low: <span id="low-count">0</span></span>
+                        <span class="badge bg-secondary fs-6">Very Low: <span id="very-low-count">0</span></span>
+                   
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if issues %}
+            <!-- Search and Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Search Issues</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchIssues" 
+                                       placeholder="Search by institution...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Issue Type</label>
+                            <select class="form-select" id="typeFilter">
+                                <option value="">All Types</option>
+                                <option value="payment">Payment Issue</option>
+                                <option value="bug">Bug/Technical Error</option>
+                                <option value="fraud">Fraud/Suspicious Activity</option>
+                                <option value="template">ID Template Issue</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="open">Open</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Priority</label>
+                            <select class="form-select" id="priorityFilter">
+                                <option value="">All Priorities</option>
+                                <option value="critical">Critical</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                                <option value="very-low">Very Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Assignment</label>
+                            <select class="form-select" id="assignedFilter">
+                                <option value="">All Assignments</option>
+                                <option value="unassigned">Unassigned</option>
+                                <option value="assigned">Assigned</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                <i class="bi bi-times me-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issues List View -->
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark">Issues Directory</h5>
+                        <div class="d-flex gap-2">
+                      
+                            <a href="/super/clear/resolved/issues">
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash me-1"></i>Clear All
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- List View -->
+                <div class="card-body p-0" id="listViewContainer">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="issuesTable">
+                            <thead class="table-dark sticky-top z-2">
+                                <tr>
+                                    <th class="px-3 py-3" style="width: 60px;">
+                                        <small>ID</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 200px;">
+                                        <small>Institution</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 120px;">
+                                        <small>Type</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 150px;">
+                                        <small>Priority</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 100px;">
+                                        <small>Status</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 150px;">
+                                        <small>Assigned To</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 120px;">
+                                        <small>Created</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 100px;">
+                                        <small>Actions</small>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="issuesTableBody">
+                                {% for issue in issues %}
+                                <tr class="issue-row status-{{ issue.status }}" 
+                                    data-institution="{{ issue.institution.name|lower }}"
+                                    data-type="{{ issue.issue_type }}"
+                                    data-status="{{ issue.status }}"
+                                    data-assigned="{% if issue.assigned_to %}assigned{% else %}unassigned{% endif %}">
+                                    <td class="px-3 py-3">
+                                        <small class="text-muted fw-bold">#{{ issue.id }}</small>
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <div class="fw-bold">{{ issue.institution.name }}</div>
+                                                <small class="text-muted">{{ issue.title|truncatechars:50 }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        {% if issue.issue_type == 'payment' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-credit-card me-1"></i>Payment
+                                            </span>
+                                        {% elif issue.issue_type == 'bug' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-bug me-1"></i>Bug
+                                            </span>
+                                        {% elif issue.issue_type == 'fraud' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-shield-exclamation me-1"></i>Fraud
+                                            </span>
+                                        {% elif issue.issue_type == 'template' %}
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-file-earmark me-1"></i>Template
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-question-circle me-1"></i>Other
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        <span class="badge">
+                                            <!-- Priority will be calculated by JavaScript -->
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        {% if issue.status == 'open' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-circle me-1"></i>Open
+                                            </span>
+                                        {% elif issue.status == 'in_progress' %}
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-arrow-clockwise me-1"></i>In Progress
+                                            </span>
+                                        {% elif issue.status == 'resolved' %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Resolved
+                                            </span>
+                                        {% elif issue.status == 'rejected' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle me-1"></i>Rejected
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        {% if issue.assigned_to %}
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                    style="width: 24px; height: 24px;">
+                                                    <small class="text-white fw-bold">
+                                                        {{ issue.assigned_to.username|first|upper }}
+                                                    </small>
+                                                </div>
+                                                <small>{{ issue.assigned_to }}</small>
+                                            </div>
+
+                                        {% else %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-person-dash me-1"></i>Unassigned
+                                            </small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        <small class="text-muted">
+                                            {{ issue.created_at|date:"M d, Y" }}<br>
+                                            {{ issue.created_at|date:"g:i A" }}
+                                        </small>
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        <div class="d-flex gap-1">
+                                            <!-- View Button -->
+                                            <a href="{% url 'issue_detail' issue.id %}">
+                                                <button class="btn btn-outline-primary btn-sm" title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted">No Issues Found</h4>
+                    <p class="text-muted">All issues have been resolved or there are no issues to display.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Priority calculation function
+        function calculatePriority(issueType, hasAssignedTo) {
+            // Priority scores: higher score = higher priority
+            let typeScore = 0;
+            switch(issueType) {
+                case 'payment':
+                    typeScore = 5;
+                    break;
+                case 'bug':
+                    typeScore = 4;
+                    break;
+                case 'fraud':
+                    typeScore = 3;
+                    break;
+                case 'template':
+                    typeScore = 2;
+                    break;
+                case 'other':
+                default:
+                    typeScore = 1;
+                    break;
+            }
+            
+            // Unassigned issues get higher priority (add 10 to score)
+            const assignmentBonus = hasAssignedTo ? 0 : 10;
+            
+            const totalScore = typeScore + assignmentBonus;
+            
+            // Convert score to priority level
+            if (totalScore >= 15) return { level: 'critical', score: totalScore };
+            if (totalScore >= 14) return { level: 'high', score: totalScore };
+            if (totalScore >= 12) return { level: 'high', score: totalScore };
+            if (totalScore >= 11) return { level: 'medium', score: totalScore };
+            if (totalScore >= 4) return { level: 'medium', score: totalScore };
+            if (totalScore >= 3) return { level: 'low', score: totalScore };
+            if (totalScore >= 2) return { level: 'low', score: totalScore };
+            return { level: 'very-low', score: totalScore };
+        }
+        
+        // Initialize priorities and sort table on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePriorities();
+            sortTableByPriority();
+            updatePriorityStats();
+        });
+        
+        function initializePriorities() {
+            const rows = document.querySelectorAll('.issue-row');
+            rows.forEach(row => {
+                const type = row.dataset.type;
+                const hasAssigned = row.dataset.assigned === 'assigned';
+                const priority = calculatePriority(type, hasAssigned);
+                
+                // Update row data attributes
+                row.dataset.priority = priority.level;
+                row.dataset.priorityScore = priority.score;
+                
+                // Update row classes
+                row.className = row.className.replace(/priority-\w+/, `priority-${priority.level}`);
+                
+                // Update priority badge
+                const priorityCell = row.querySelector('td:nth-child(4) .badge');
+                if (priorityCell) {
+                    priorityCell.className = `badge badge-priority-${priority.level}`;
+                    let icon = '';
+                    let text = '';
+                    switch(priority.level) {
+                        case 'critical':
+                            icon = 'bi-exclamation-triangle-fill';
+                            text = 'Critical';
+                            break;
+                        case 'high':
+                            icon = 'bi-exclamation-triangle';
+                            text = 'High';
+                            break;
+                        case 'medium':
+                            icon = 'bi-exclamation-circle';
+                            text = 'Medium';
+                            break;
+                        case 'low':
+                            icon = 'bi-info-circle';
+                            text = 'Low';
+                            break;
+                        case 'very-low':
+                            icon = 'bi-dash-circle';
+                            text = 'Very Low';
+                            break;
+                    }
+                    priorityCell.innerHTML = `<i class="bi ${icon} me-1"></i>${text}`;
+                }
+            });
+        }
+        
+        function sortTableByPriority() {
+            const tbody = document.getElementById('issuesTableBody');
+            const rows = Array.from(tbody.querySelectorAll('.issue-row'));
+            
+            rows.sort((a, b) => {
+                const scoreA = parseInt(a.dataset.priorityScore) || 0;
+                const scoreB = parseInt(b.dataset.priorityScore) || 0;
+                return scoreB - scoreA; // Higher score first (descending order)
+            });
+            
+            // Re-append rows in sorted order
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        function updatePriorityStats() {
+            const rows = document.querySelectorAll('.issue-row:not([style*="display: none"])');
+            const stats = {
+                critical: 0,
+                high: 0,
+                medium: 0,
+                low: 0,
+                'very-low': 0
+            };
+            
+            rows.forEach(row => {
+                const priority = row.dataset.priority;
+                if (stats.hasOwnProperty(priority)) {
+                    stats[priority]++;
+                }
+            });
+            
+            document.getElementById('critical-count').textContent = stats.critical;
+            document.getElementById('high-count').textContent = stats.high;
+            document.getElementById('medium-count').textContent = stats.medium;
+            document.getElementById('low-count').textContent = stats.low;
+            document.getElementById('very-low-count').textContent = stats['very-low'];
+        }
+        
+        // Search and filter functionality
+        document.getElementById('searchIssues').addEventListener('input', filterIssues);
+        document.getElementById('typeFilter').addEventListener('change', filterIssues);
+        document.getElementById('statusFilter').addEventListener('change', filterIssues);
+        document.getElementById('priorityFilter').addEventListener('change', filterIssues);
+        document.getElementById('assignedFilter').addEventListener('change', filterIssues);
+        
+        function filterIssues() {
+            const searchTerm = document.getElementById('searchIssues').value.toLowerCase().trim();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const assignedFilter = document.getElementById('assignedFilter').value;
+            
+            const rows = document.querySelectorAll('.issue-row');
+            
+            rows.forEach(row => {
+                const institution = row.dataset.institution.toLowerCase();
+                const type = row.dataset.type;
+                const status = row.dataset.status;
+                const priority = row.dataset.priority;
+                const assigned = row.dataset.assigned;
+                
+                // Enhanced search logic for word-based matching
+                let matchesSearch = true;
+                if (searchTerm) {
+                    // Split search term into words and check if all words are found in institution name
+                    const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
+                    matchesSearch = searchWords.every(word => institution.includes(word));
+                }
+                
+                const matchesType = !typeFilter || type === typeFilter;
+                const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesPriority = !priorityFilter || priority === priorityFilter;
+                const matchesAssigned = !assignedFilter || assigned === assignedFilter;
+                
+                if (matchesSearch && matchesType && matchesStatus && matchesPriority && matchesAssigned) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update stats after filtering
+            updatePriorityStats();
+        }
+        
+        function clearFilters() {
+            document.getElementById('searchIssues').value = '';
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('priorityFilter').value = '';
+            document.getElementById('assignedFilter').value = '';
+            filterIssues();
+        }
+        
+
+    </script>
+{% endblock %}
+

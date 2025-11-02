@@ -1,0 +1,67 @@
+{% extends "base_email.html" %}
+
+{% block title %}InstiPass - Demo Session Rescheduled{% endblock %}
+
+{% block header %}
+<img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+<h1>Demo Session Update</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Demo Session Rescheduled</h2>
+
+<p>We're reaching out to inform you that your InstiPass demonstration session has been rescheduled.</p>
+
+<div class="update-container">
+    <div style="font-size: 48px; margin-bottom: 15px;">📅</div>
+    <h3>New Schedule Details</h3>
+    <p><strong>Date:</strong> {{ date }}</p>
+    <p><strong>Time:</strong> {{ time }}</p>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ calendar_link|default:'#' }}" class="cta-button text-dark">Add to Calendar</a>
+    <a href="#" class="cta-button secondary">Contact Support</a>
+</div>
+
+<div class="divider"></div>
+
+<div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">📌</div>
+        <div>
+            <strong>Meeting Link</strong>
+            <p>The meeting link remains the same. If you need a new link, please contact our team.</p>
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: flex-start;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">📝</div>
+        <div>
+            <strong>Preparation</strong>
+            <p>Please review the demo materials sent previously and prepare any questions you may have.</p>
+        </div>
+    </div>
+</div>
+<div class="calendar-invite">
+                <p>Add this demo session to your calendar:</p>
+                <a href="{{ calendar_link|default:'#' }}" class="btn btn-primary">Add to Google Calendar</a>
+                <!-- <a href="{{ ics_link|default:'#' }}" class="btn-secondary">Download .ICS File</a> -->
+            </div>
+<div class="security-notice">
+    <h4>Need to Reschedule?</h4>
+    <p>If this new time doesn't work for you, please reply to this email or contact us at <a href="mailto:demos@instipass.com">demos@instipass.com</a> to arrange a more suitable time.</p>
+</div>
+
+<p>We apologize for any inconvenience this change may cause and look forward to demonstrating InstiPass to you.</p>
+
+<p>Best regards,<br>
+The InstiPass Team</p>
+{% endblock %}
+
+{% block extra_styles %}
+.update-container {
+    background-color: #e8f5e9;
+    border: 1px solid #a5d6a7;
+}
+{% endblock %}

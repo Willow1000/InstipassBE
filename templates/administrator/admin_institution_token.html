@@ -1,0 +1,790 @@
+{% extends "base.html" %}
+{% block title %}Student Registration Tokens{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+    
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 text-white mb-1">Students Registration Tokens</h1>
+                        <p class="text-muted mb-0">Manage and monitor Student Registration API tokens</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary fs-6">Total Tokens: {{ tokens|length }}</span>
+                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#generateTokenModal">
+                            <i class="bi bi-plus me-1"></i>Generate Token
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshPage()">
+                            <i class="bi bi-sync-alt me-1"></i>Refresh
+                        </button>
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if tokens %}
+            <!-- Filters and Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchTokens" placeholder="Search by institution or token...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="expiring">Expiring Soon</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Institution</label>
+                            <select class="form-select" id="institutionFilter">
+                                <option value="">All Institutions</option>
+                                {% for institution in institutions %}
+                                <option value="{{ institution.id }}">{{ institution.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Created Date</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="">All Time</option>
+                                <option value="today">Created Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Expiry Date</label>
+                            <select class="form-select" id="expiryFilter">
+                                <option value="">All Expiry</option>
+                                <option value="expired">Already Expired</option>
+                                <option value="today">Expires Today</option>
+                                <option value="week">Expires This Week</option>
+                                <option value="month">Expires This Month</option>
+                                <option value="future">Expires Later</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                               Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-success bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-check-circle text-success bi-2x mb-2"></i>
+                            <h5 class="card-title text-success" id="activeTokenCount">0</h5>
+                            <p class="card-text text-muted small">Active Tokens (75%+ Remaining)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-warning bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-exclamation-triangle text-warning bi-2x mb-2"></i>
+                            <h5 class="card-title text-warning" id="expiringSoonCount">0</h5>
+                            <p class="card-text text-muted small">Expiring Soon (Last 25%)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-danger bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-x-circle text-danger bi-2x mb-2"></i>
+                            <h5 class="card-title text-danger" id="expiredTokenCount">0</h5>
+                            <p class="card-text text-muted small">Expired Tokens</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-info bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-building text-info bi-2x mb-2"></i>
+                            <h5 class="card-title text-info" id="institutionCount">0</h5>
+                            <p class="card-text text-muted small">Institutions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tokens Table -->
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark ">API Tokens</h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-info btn-sm" onclick="toggleTokenVisibility()">
+                                <i class="bi bi-eye me-1" id="tokenVisibilityIcon"></i>
+                                <span id="tokenVisibilityText">Show Tokens</span>
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportTokens()">
+                                <i class="bi bi-download me-1"></i>Export
+                            </button>
+                            <a class="btn btn-outline-danger btn-sm" href="/super/clear/expired/student/tokens">
+                                <i class="bi bi-trash me-1"></i>Cleanup Expired
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="tokensTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;">
+                                        <small>ID</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 200px;">
+                                        <small>Institution</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 250px;">
+                                        <small>Token</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 100px;">
+                                        <small>Lifetime</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 150px;">
+                                        <small>Expires</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 100px;">
+                                        <small>Status</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 150px;">
+                                        <small>Created</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 120px;">
+                                        <small>Actions</small>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tokensTableBody">
+                                {% for token in tokens %}
+                                <tr class="token-row" 
+                                    data-institution="{{ token.institution.name|lower }}" 
+                                    data-institution-id="{{ token.institution.id }}"
+                                    data-token="{{ token.token|lower }}"
+                                    data-lifetime="{{ token.lifetime }}"
+                                    data-expiry="{{ token.expiry_date.isoformat }}"
+                                    data-created="{{ token.created_at.isoformat }}">
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">#{{ token.id }}</small>
+                                    </td>
+                                    
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-building text-primary me-2"></i>
+                                            <span class="fw-medium">{{ token.institution.name }}</span>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <code class="small bg-light px-2 py-1 rounded token-display flex-grow-1" data-token="{{ token.token }}">
+                                                ••••••••••••••••••••
+                                            </code>
+                                            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToken('{{ token.token }}')">
+                                                <i class="bi bi-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <span class="badge bg-secondary">{{ token.lifetime }} days</span>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <div class="expires-countdown" data-expiry="{{ token.expiry_date.isoformat }}">
+                                            <small class="text-muted expiry-date">
+                                                {{ token.expiry_date|date:"M d, Y" }}<br>
+                                                {{ token.expiry_date|date:"H:i:s" }}
+                                            </small>
+                                            <div class="countdown-timer mt-1">
+                                                <small class="text-primary countdown-text"></small>
+                                            </div>
+                                        </div>
+                                        <div class="progress mt-1" style="height: 3px;">
+                                            <div class="progress-bar token-progress" data-expiry="{{ token.expiry_date.isoformat }}" data-created="{{ token.created_at.isoformat }}" data-lifetime="{{ token.lifetime }}"></div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <span class="badge token-status" data-expiry="{{ token.expiry_date.isoformat }}">
+                                            <!-- Status will be set by JavaScript -->
+                                        </span>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">
+                                            {{ token.created_at|date:"M d, Y" }}<br>
+                                            {{ token.created_at|date:"H:i:s" }}
+                                        </small>
+                                    </td>
+                                    
+                                    <td class="text-center px-3 py-2">
+                                        <a href="{% url 'delete_institution_token' token.id %}">
+                                            <button class="btn btn-sm btn-outline-danger" title="Delete Token">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    Showing <span id="showingCount">{{ tokens|length }}</span> of <span id="totalCount">{{ tokens|length }}</span> entries
+                    <span id="noResultsMessage" style="display: none;">No tokens match your search criteria.</span>
+                </div>
+                <div id="paginationControls" class="d-flex gap-2">
+                    <!-- Pagination controls would go here -->
+                </div>
+            </div>
+
+        {% elif no_results %}
+            <!-- No Search Results -->
+            <div class="text-center py-5">
+                <div class="text-muted">
+                    <i class="bi bi-search bi-4x mb-4 text-secondary"></i>
+                    <h3>No Results Found</h3>
+                    <p class="lead">Your search didn't match any tokens. Try adjusting your search criteria.</p>
+                    <button class="btn btn-outline-primary" onclick="clearFilters()">Clear Filters</button>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="text-muted">
+                    <i class="bi bi-key bi-4x mb-4 text-secondary"></i>
+                    <h3>No API Tokens Found</h3>
+                    <p class="lead">API tokens will appear here once you generate them for institutions.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Generate New Token Modal -->
+    <div class="modal fade" id="generateTokenModal" tabindex="-1" aria-labelledby="generateTokenModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generateTokenModalLabel">Generate New Registration Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="generateTokenForm" action="http://127.0.0.1:8000/institution/api/student/registration/token/create" method="POST">
+                    
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="emailInput" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="emailInput" name="email" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Generate Token</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tokensVisible = false;
+
+        // Initialize functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            updateTokenStatuses();
+            updateProgressBars();
+            updateCountdownTimers();
+            attachFilterListeners();
+            
+            // Update progress bars and countdown timers every second for accuracy
+            setInterval(() => {
+                updateProgressBars();
+                updateCountdownTimers();
+            }, 1000);
+            
+            // Update statistics and statuses every minute
+            setInterval(() => {
+                updateStatistics();
+                updateTokenStatuses();
+            }, 60000);
+        });
+
+        function updateStatistics() {
+            const rows = document.querySelectorAll('.token-row:not([style*="display: none"])');
+            let activeCount = 0;
+            let expiringSoonCount = 0;
+            let expiredCount = 0;
+            const institutions = new Set();
+
+            const now = new Date();
+
+            rows.forEach(row => {
+                const createdDate = new Date(row.dataset.created);
+                const expiryDate = new Date(row.dataset.expiry);
+                const institutionId = row.dataset.institutionId;
+                
+                institutions.add(institutionId);
+                
+                // Calculate total lifetime and time elapsed
+                const totalLifetime = expiryDate.getTime() - createdDate.getTime();
+                const timeElapsed = now.getTime() - createdDate.getTime();
+                const percentElapsed = (timeElapsed / totalLifetime) * 100;
+                
+                if (expiryDate <= now) {
+                    // Token has expired
+                    expiredCount++;
+                } else if (percentElapsed >= 75) {
+                    // Token is in last 1/4 of its lifetime (expiring soon)
+                    expiringSoonCount++;
+                } else {
+                    // Token has more than 1/4 of its lifetime remaining (active)
+                    activeCount++;
+                }
+            });
+
+            document.getElementById('activeTokenCount').textContent = activeCount;
+            document.getElementById('expiringSoonCount').textContent = expiringSoonCount;
+            document.getElementById('expiredTokenCount').textContent = expiredCount;
+            document.getElementById('institutionCount').textContent = institutions.size;
+        }
+
+        function updateTokenStatuses() {
+            const statusElements = document.querySelectorAll('.token-status');
+            const now = new Date();
+
+            statusElements.forEach(element => {
+                const row = element.closest('.token-row');
+                const createdDate = new Date(row.dataset.created);
+                const expiryDate = new Date(element.dataset.expiry);
+                
+                // Calculate total lifetime and time elapsed
+                const totalLifetime = expiryDate.getTime() - createdDate.getTime();
+                const timeElapsed = now.getTime() - createdDate.getTime();
+                const percentElapsed = (timeElapsed / totalLifetime) * 100;
+                
+                if (expiryDate <= now) {
+                    // Token has expired
+                    element.className = 'badge bg-danger';
+                    element.textContent = 'Expired';
+                } else if (percentElapsed >= 75) {
+                    // Token is in last 1/4 of its lifetime (expiring soon)
+                    element.className = 'badge bg-warning';
+                    element.textContent = 'Expiring Soon';
+                } else {
+                    // Token has more than 1/4 of its lifetime remaining (active)
+                    element.className = 'badge bg-success';
+                    element.textContent = 'Active';
+                }
+            });
+        }
+
+        function updateProgressBars() {
+            const progressBars = document.querySelectorAll('.token-progress');
+            const now = new Date();
+
+            progressBars.forEach(bar => {
+                const createdDate = new Date(bar.dataset.created);
+                const expiryDate = new Date(bar.dataset.expiry);
+                const totalLifetime = expiryDate.getTime() - createdDate.getTime();
+                const timeElapsed = now.getTime() - createdDate.getTime();
+                const percentElapsed = Math.min(100, Math.max(0, (timeElapsed / totalLifetime) * 100));
+                
+                bar.style.width = percentElapsed + '%';
+                
+                if (percentElapsed >= 90) {
+                    bar.className = 'progress-bar bg-danger';
+                } else if (percentElapsed >= 75) {
+                    bar.className = 'progress-bar bg-warning';
+                } else {
+                    bar.className = 'progress-bar bg-success';
+                }
+            });
+        }
+
+        function updateCountdownTimers() {
+            const countdownElements = document.querySelectorAll('.expires-countdown');
+            const now = new Date();
+
+            countdownElements.forEach(element => {
+                const expiryDate = new Date(element.dataset.expiry);
+                const countdownText = element.querySelector('.countdown-text');
+                const timeRemaining = expiryDate.getTime() - now.getTime();
+
+                if (timeRemaining <= 0) {
+                    // Token has expired
+                    countdownText.textContent = 'EXPIRED';
+                    countdownText.className = 'text-danger countdown-text fw-bold';
+                } else {
+                    // Calculate time remaining
+                    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+                    let countdownString = '';
+                    let textClass = 'text-primary countdown-text';
+
+                    if (days > 0) {
+                        countdownString = `${days}d ${hours}h ${minutes}m`;
+                    } else if (hours > 0) {
+                        countdownString = `${hours}h ${minutes}m ${seconds}s`;
+                        if (hours < 24) {
+                            textClass = 'text-warning countdown-text fw-bold';
+                        }
+                    } else if (minutes > 0) {
+                        countdownString = `${minutes}m ${seconds}s`;
+                        textClass = 'text-warning countdown-text fw-bold';
+                    } else {
+                        countdownString = `${seconds}s`;
+                        textClass = 'text-danger countdown-text fw-bold';
+                    }
+
+                    countdownText.textContent = countdownString;
+                    countdownText.className = textClass;
+                }
+            });
+        }
+
+        function attachFilterListeners() {
+            document.getElementById('searchTokens').addEventListener('input', filterTokens);
+            document.getElementById('statusFilter').addEventListener('change', filterTokens);
+            document.getElementById('institutionFilter').addEventListener('change', filterTokens);
+            document.getElementById('dateFilter').addEventListener('change', filterTokens);
+            document.getElementById('expiryFilter').addEventListener('change', filterTokens);
+        }
+
+        function filterTokens() {
+            const searchTerm = document.getElementById('searchTokens').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const institutionFilter = document.getElementById('institutionFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const expiryFilter = document.getElementById('expiryFilter').value;
+            const rows = document.querySelectorAll('.token-row');
+            let visibleCount = 0;
+
+            const now = new Date();
+
+            rows.forEach(row => {
+                const institution = row.dataset.institution;
+                const token = row.dataset.token;
+                const institutionId = row.dataset.institutionId;
+                const createdDate = new Date(row.dataset.created);
+                const expiryDate = new Date(row.dataset.expiry);
+                
+                // Search term matching
+                const matchesSearch = institution.includes(searchTerm) || token.includes(searchTerm);
+                
+                // Status matching
+                let matchesStatus = true;
+                if (statusFilter) {
+                    // Calculate total lifetime and time elapsed
+                    const totalLifetime = expiryDate.getTime() - createdDate.getTime();
+                    const timeElapsed = now.getTime() - createdDate.getTime();
+                    const percentElapsed = (timeElapsed / totalLifetime) * 100;
+                    
+                    if (statusFilter === 'active') {
+                        // Token has more than 1/4 of its lifetime remaining
+                        matchesStatus = expiryDate > now && percentElapsed < 75;
+                    } else if (statusFilter === 'expiring') {
+                        // Token is in last 1/4 of its lifetime but not expired
+                        matchesStatus = expiryDate > now && percentElapsed >= 75;
+                    } else if (statusFilter === 'expired') {
+                        // Token has expired
+                        matchesStatus = expiryDate <= now;
+                    }
+                }
+                
+                // Institution matching
+                const matchesInstitution = !institutionFilter || institutionId === institutionFilter;
+                
+                // Created date range matching
+                let matchesDate = true;
+                if (dateFilter) {
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    
+                    if (dateFilter === 'today') {
+                        matchesDate = createdDate >= today;
+                    } else if (dateFilter === 'week') {
+                        const weekAgo = new Date(now);
+                        weekAgo.setDate(now.getDate() - 7);
+                        matchesDate = createdDate >= weekAgo;
+                    } else if (dateFilter === 'month') {
+                        const monthAgo = new Date(now);
+                        monthAgo.setDate(now.getDate() - 30);
+                        matchesDate = createdDate >= monthAgo;
+                    }
+                }
+                
+                // Expiry date range matching
+                let matchesExpiry = true;
+                if (expiryFilter) {
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    const weekFromNow = new Date(now);
+                    weekFromNow.setDate(now.getDate() + 7);
+                    const monthFromNow = new Date(now);
+                    monthFromNow.setDate(now.getDate() + 30);
+                    
+                    if (expiryFilter === 'expired') {
+                        matchesExpiry = expiryDate <= now;
+                    } else if (expiryFilter === 'today') {
+                        matchesExpiry = expiryDate >= today && expiryDate < tomorrow;
+                    } else if (expiryFilter === 'week') {
+                        matchesExpiry = expiryDate >= now && expiryDate <= weekFromNow;
+                    } else if (expiryFilter === 'month') {
+                        matchesExpiry = expiryDate >= now && expiryDate <= monthFromNow;
+                    } else if (expiryFilter === 'future') {
+                        matchesExpiry = expiryDate > monthFromNow;
+                    }
+                }
+                
+                if (matchesSearch && matchesStatus && matchesInstitution && matchesDate && matchesExpiry) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            document.getElementById('showingCount').textContent = visibleCount;
+            document.getElementById('totalCount').textContent = document.querySelectorAll('.token-row').length;
+            
+            // Show/hide no results message
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            if (visibleCount === 0 && (searchTerm || statusFilter || institutionFilter || dateFilter || expiryFilter)) {
+                noResultsMessage.style.display = 'inline';
+            } else {
+                noResultsMessage.style.display = 'none';
+            }
+            
+            // Update statistics based on filtered results
+            updateStatistics();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchTokens').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('institutionFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('expiryFilter').value = '';
+            filterTokens();
+        }
+
+        function toggleTokenVisibility() {
+            tokensVisible = !tokensVisible;
+            const tokenDisplays = document.querySelectorAll('.token-display');
+            const icon = document.getElementById('tokenVisibilityIcon');
+            const text = document.getElementById('tokenVisibilityText');
+            
+            tokenDisplays.forEach(display => {
+                if (tokensVisible) {
+                    display.textContent = display.dataset.token;
+                } else {
+                    display.textContent = '••••••••••••••••••••';
+                }
+            });
+            
+            if (tokensVisible) {
+                icon.className = 'bi bi-eye-slash me-1';
+                text.textContent = 'Hide Tokens';
+            } else {
+                icon.className = 'bi bi-eye me-1';
+                text.textContent = 'Show Tokens';
+            }
+        }
+
+        function copyToken(token) {
+            navigator.clipboard.writeText(token).then(() => {
+                // Show a temporary success message
+                const toast = document.createElement('div');
+                toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+                toast.style.zIndex = '9999';
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            Token copied to clipboard!
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+                
+                // Remove toast after it's hidden
+                toast.addEventListener('hidden.bs.toast', () => {
+                    document.body.removeChild(toast);
+                });
+            }).catch(() => {
+                alert('Failed to copy token to clipboard');
+            });
+        }
+
+        function refreshPage() {
+            location.reload();
+        }
+
+        
+
+        // Fix for jQuery selector (if needed)
+        if (typeof jQuery !== 'undefined') {
+            jQuery.expr[':'].contains = function(a, i, m) {
+                return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+            };
+        }
+        document.getElementById("generateTokenForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const email = formData.get("email");
+
+            fetch(form.action, {
+                method: form.method,
+                headers: {
+                    "Content-Type": "application/json",
+                    // Add CSRF token if your Django setup requires it
+                    "X-CSRFToken": getCookie("csrftoken"), 
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Success:", data);
+                // Handle success, e.g., close modal, show message, refresh table
+                const modalElement = document.getElementById("generateTokenModal");
+                const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                modal.hide();
+                refreshPage(); // Refresh the page to show the new token
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                // Handle errors, e.g., show error message to user
+                alert("Error generating token: " + error.message);
+            });
+        });
+
+        // Function to get CSRF token (if needed)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+
+    <style>
+        .table th {
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table td {
+            vertical-align: middle;
+            font-size: 0.875rem;
+        }
+        
+        .token-row:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        code {
+            font-size: 0.8rem;
+        }
+        
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .progress {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .token-display {
+            font-family: 'Courier New', monospace;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .btn-group .btn {
+            border-radius: 0.25rem;
+            margin-right: 2px;
+        }
+        
+        .btn-group .btn:last-child {
+            margin-right: 0;
+        }
+        
+        .countdown-timer {
+            min-height: 20px;
+        }
+        
+        .countdown-text {
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+        
+        .expires-countdown {
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+

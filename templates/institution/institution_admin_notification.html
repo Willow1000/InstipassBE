@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InstiPass Admin Notification{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* InstiPass theme colors and styling from base template */
+        :root {
+            --primary: #2A9D8F;
+            --secondary: #1D3557;
+            --accent: #E76F51;
+            --warning: #F4A261;
+            --success: #4CAF50;
+        }
+        
+        /* Admin notification specific styles */
+        .admin-container {
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+        }
+        
+        .admin-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .admin-responsibilities {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .responsibility-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .responsibility-icon {
+            margin-right: 15px;
+            color: var(--primary);
+            font-size: 20px;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        .access-credentials {
+            background-color: #fff8e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px dashed var(--warning);
+        }
+        
+        .admin-tools {
+            margin: 20px 0;
+            padding-left: 0;
+            list-style-type: none;
+        }
+        
+        .admin-tools li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .admin-tools li:before {
+            content: "✓";
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .training-info {
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid var(--success);
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .cta-button:hover {
+            background-color: #238b7e;
+        }
+        
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            {% block header %}
+            <img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+            <h1>You're Now an InstiPass Administrator</h1>
+            {% endblock %}
+        </div>
+        
+        <div class="email-body">
+            <h2>Hello {{ admin_name|default:"Administrator" }},</h2>
+            
+            <p>You have been designated as the administrator for <strong>{{ institution_name }}</strong> on the InstiPass platform.</p>
+            
+            <div class="admin-container">
+                <div class="admin-icon">👨‍💼</div>
+                <h3>Administrator Access Granted</h3>
+                <p>Institution: <strong>{{ institution_name }}</strong></p>
+                <p>Account ID: <strong>{{ account_id|default:"INST-" }}{{ institution_id|default:"12345" }}</strong></p>
+            </div>
+            
+            <p>As the administrator, you'll have full access to manage your institution's ID system, including student registrations, ID processing, and staff management.</p>
+            
+            <div class="admin-responsibilities">
+                <h4>Your Administrator Responsibilities</h4>
+                
+                <div class="responsibility-item">
+                    <div class="responsibility-icon">🔐</div>
+                    <div>
+                        <strong>Account Management</strong>
+                        <p>Manage institution settings, profile information, and security configurations.</p>
+                    </div>
+                </div>
+                
+                <div class="responsibility-item">
+                    <div class="responsibility-icon">👥</div>
+                    <div>
+                        <strong>Staff Administration</strong>
+                        <p>Add and manage staff members who will help process student IDs.</p>
+                    </div>
+                </div>
+                
+                <div class="responsibility-item">
+                    <div class="responsibility-icon">📊</div>
+                    <div>
+                        <strong>Reporting & Analytics</strong>
+                        <p>Access comprehensive reports on ID issuance, processing times, and system usage.</p>
+                    </div>
+                </div>
+                
+                <div class="responsibility-item">
+                    <div class="responsibility-icon">⚙️</div>
+                    <div>
+                        <strong>System Configuration</strong>
+                        <p>Customize ID templates, workflow settings, and notification preferences.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="access-credentials">
+                <h4>Access Your Administrator Dashboard</h4>
+                <p>You can access your administrator dashboard using your email address. If you haven't set up your password yet, please use the link below to create one.</p>
+                <div class="text-center">
+                    <a href="#" class="cta-button">Set Up Your Account</a>
+                </div>
+            </div>
+            
+            <h4>Administrator Tools Available to You</h4>
+            <ul class="admin-tools">
+                <li>Institution Profile Management</li>
+                <li>Staff User Administration</li>
+                <li>ID Template Designer</li>
+                <li>Workflow Configuration</li>
+                <li>Reporting & Analytics Dashboard</li>
+                <li>System Logs & Audit Trails</li>
+            </ul>
+            
+            <div class="training-info">
+                <h4>Administrator Training Resources</h4>
+                <p>We recommend completing our administrator training to get the most out of InstiPass:</p>
+                <p>📚 <a href="#">Administrator Guide & Documentation</a></p>
+                <p>🎓 <a href="#">Schedule a Free Training Session</a></p>
+                <p>📹 <a href="#">Watch Video Tutorials</a></p>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p>If you have any questions about your administrator role or need assistance, please contact our support team at <a href="mailto:support@instipass.com">support@instipass.com</a> or call (555) 123-4567.</p>
+            
+            <p>Best regards,<br>The InstiPass Team</p>
+        </div>
+        
+        <div class="email-footer">
+            {% block footer %}
+            <p>&copy; {% now "Y" %} InstiPass. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+            <p>You're receiving this email because you've been designated as an administrator for {{ institution_name }} on InstiPass.</p>
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{% extends 'form.html' %}
+{% block title %}Student Register {% endblock %}
+{% block content %}
+
+<h1>Id Ready</h1>
+    <div style="width: 500px; padding-top: 3rem; margin-top: .1rem; padding-bottom: 3rem; min-height: auto" class="d-flex shadow-lg align-items-space-between rounded-3">
+        <form style="width: 30rem" class="d-flex gap-3 flex-column ms-5" method="POST" enctype="multipart/form-data" action="">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button style="margin: 2rem;" type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+{% endblock %}

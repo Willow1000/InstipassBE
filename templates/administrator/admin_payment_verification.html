@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+{% block title %}Payment Verification{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 text-white mb-1">Payment Verification</h1>
+                        <p class="text-muted mb-0">Review and verify payment proofs from institutions</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary fs-6">Total Verifications: {{ verifications|length }}</span>
+                       
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshPage()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if verifications %}
+            <!-- Filters and Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchVerifications" placeholder="Search by institution, document...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="UNDER REVIEW">Under Review</option>
+                                <option value="APPROVED">Approved</option>
+                                <option value="REJECTED">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Date Range</label>
+                            <select class="form-select" id="dateFilter">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-warning bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-clock-history text-warning bi-2x mb-2"></i>
+                            <h5 class="card-title text-warning" id="underReviewCount">{{ under_review_count|default:0 }}</h5>
+                            <p class="card-text text-muted small">Under Review</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-success bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-check-circle-fill text-success bi-2x mb-2"></i>
+                            <h5 class="card-title text-success" id="approvedCount">{{ approved_count|default:0 }}</h5>
+                            <p class="card-text text-muted small">Approved</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-danger bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-x-circle-fill text-danger bi-2x mb-2"></i>
+                            <h5 class="card-title text-danger" id="rejectedCount">{{ rejected_count|default:0 }}</h5>
+                            <p class="card-text text-muted small">Rejected</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-info bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-file-earmark-check text-info bi-2x mb-2"></i>
+                            <h5 class="card-title text-info">{{ verifications|length }}</h5>
+                            <p class="card-text text-muted small">Total Verifications</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verifications Table -->
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark">Payment Verification Records</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="verificationsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="px-3 py-3 text-center" style="width: 60px;"><small>ID</small></th>
+                                    <th class="px-3 py-3" style="width: 180px;"><small>Institution</small></th>
+                                    <th class="px-3 py-3" style="width: 200px;"><small>Document</small></th>
+                                    <th class="px-3 py-3" style="width: 140px;"><small>Status</small></th>
+                                    <th class="px-3 py-3" style="width: 160px;"><small>Created At</small></th>
+                                    <th class="px-3 py-3" style="width: 160px;"><small>Updated At</small></th>
+                                    <th class="px-3 py-3 text-center" style="width: 200px;"><small>Actions</small></th>
+                                </tr>
+                            </thead>
+                            <tbody id="verificationsTableBody">
+                                {% for verification in verifications %}
+                                <tr class="verification-row"
+                                    data-institution="{{ verification.institution.name }}"
+                                    data-document="{{ verification.document.name }}"
+                                    data-status="{{ verification.status }}"
+                                    data-date="{{ verification.created_at|date:'Y-m-d' }}"
+                                    data-created="{{ verification.created_at|date:'Y-m-d H:i:s' }}">
+
+                                    <td class="text-center px-3 py-2">
+                                        <small class="text-muted">#{{ verification.id }}</small>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-building text-primary me-2"></i>
+                                             <span class="fw-medium">{{ verification.institution }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-file-earmark text-primary me-2"></i>
+                                            <a href="{{ verification.document.url }}" target="_blank" class="text-decoration-none">
+                                                <span class="fw-medium">View Document</span>
+                                            </a>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        {% if verification.status == 'UNDER REVIEW' %}
+                                            <span class="badge bg-warning text-dark">Under Review</span>
+                                        {% elif verification.status == 'APPROVED' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% elif verification.status == 'REJECTED' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ verification.status|default:"Not Set" }}</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <div class="">
+                                            <i class="bi bi-calendar-check text-primary me-2"></i>
+                                            <small class="text-muted">{{ verification.created_at|date:"M d, Y" }}</small>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                        <small class="text-muted">
+                                            {{ verification.updated_at|date:"M d, Y" }}<br>
+                                            {{ verification.updated_at|date:"H:i:s" }}
+                                        </small>
+                                    </td>
+
+                                    <td class="px-3 py-3 text-center">
+                                        <div class="btn-group d-flex gap-2">
+                                            {% if verification.status == 'UNDER REVIEW' or not verification.status %}
+                                                <button class="btn btn-sm btn-success verify-btn" 
+                                                        data-verification-id="{{ verification.id }}"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#verifyModal">
+                                                    <i class="bi bi-check-circle me-1"></i>Verify
+                                                </button>
+                                                <button class="btn btn-sm btn-danger reject-btn" 
+                                                        data-verification-id="{{ verification.id }}"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#rejectModal">
+                                                    <i class="bi bi-x-circle me-1"></i>Reject
+                                                </button>
+                                            {% else %}
+                                                <!-- Show details button for verified/rejected payments -->
+                                                <button class="btn btn-sm btn-info details-btn" 
+                                                        data-verification-id="{{ verification.id }}"
+                                                        data-verification-data='{
+                                                            "id": "{{ verification.id }}",
+                                                            "institution": "{{ verification.institution.name|escapejs }}",
+                                                            "document_url": "{{ verification.document.url|escapejs }}",
+                                                            "status": "{{ verification.status|escapejs }}",
+                                                            "remarks": "{{ verification.remarks|default:""|escapejs }}",
+                                                            "admin": "{{ verification.admin.get_full_name|default:verification.admin.username|escapejs }}",
+                                                            "created_at": "{{ verification.created_at|date:"M d, Y H:i:s" }}",
+                                                            "updated_at": "{{ verification.updated_at|date:"M d, Y H:i:s" }}"
+                                                        }'
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#detailsModal">
+                                                    <i class="bi bi-eye me-1"></i>View Details
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-file-earmark-x text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">No Payment Verifications Found</h4>
+                <p class="text-muted">There are currently no payment verification records in the system.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Verify Modal -->
+    <div class="modal fade" id="verifyModal" tabindex="-1" aria-labelledby="verifyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verifyModalLabel">Verify Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="verifyForm" method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="verification_id" id="verifyVerificationId">
+                    <div class="modal-body">
+                        <p>Are you sure you want to verify this payment?</p>
+                        <div class="mb-3">
+                            <label for="verifyRemarks" class="form-label">Remarks (Optional)</label>
+                            <textarea class="form-control" id="verifyRemarks" name="remark" rows="3" placeholder="Add any remarks or comments..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Verify Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel">Reject Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="rejectForm" method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="verification_id" id="rejectVerificationId">
+                    <div class="modal-body">
+                        <p>Are you sure you want to reject this payment?</p>
+                        <div class="mb-3">
+                            <label for="rejectRemarks" class="form-label">Remarks (Required)</label>
+                            <textarea class="form-control" id="rejectRemarks" name="remark" rows="3" placeholder="Please provide reason for rejection..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsModalLabel">Payment Verification Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="detailsModalBody">
+                    <!-- Details will be loaded here via JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Search, Filter, and Stats -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchVerifications');
+            const statusFilter = document.getElementById('statusFilter');
+            const dateFilter = document.getElementById('dateFilter');
+            const tableBody = document.getElementById('verificationsTableBody');
+            const allRows = Array.from(tableBody.querySelectorAll('.verification-row'));
+
+            let currentPage = 1;
+            let filteredRows = [...allRows];
+
+            // Update statistics
+            function updateStatistics(rows) {
+                const underReview = rows.filter(r => r.dataset.status === 'UNDER REVIEW').length;
+                const approved = rows.filter(r => r.dataset.status === 'APPROVED').length;
+                const rejected = rows.filter(r => r.dataset.status === 'REJECTED').length;
+
+                document.getElementById('underReviewCount').textContent = underReview;
+                document.getElementById('approvedCount').textContent = approved;
+                document.getElementById('rejectedCount').textContent = rejected;
+            }
+
+            // Date range check
+            function isDateInRange(dateStr, range) {
+                if (!dateStr || !range) return true;
+                const today = new Date();
+                const rowDate = new Date(dateStr);
+
+                const todayStr = today.toISOString().split('T')[0];
+                const day = today.getDay();
+                const month = today.getMonth();
+                const year = today.getFullYear();
+
+                switch (range) {
+                    case 'today':
+                        return dateStr === todayStr;
+                    case 'week':
+                        const firstDayOfWeek = new Date(today);
+                        firstDayOfWeek.setDate(today.getDate() - day);
+                        firstDayOfWeek.setHours(0, 0, 0, 0);
+                        const lastDayOfWeek = new Date(firstDayOfWeek);
+                        lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+                        return rowDate >= firstDayOfWeek && rowDate <= lastDayOfWeek;
+                    case 'month':
+                        return rowDate.getMonth() === month && rowDate.getFullYear() === year;
+                    default:
+                        return true;
+                }
+            }
+
+            // Filter logic
+            function filterVerifications() {
+                const term = searchInput.value.toLowerCase();
+                const status = statusFilter.value;
+                const date = dateFilter.value;
+
+                filteredRows = allRows.filter(row => {
+                    const inst = (row.dataset.institution || '').toLowerCase();
+                    const document = (row.dataset.document || '').toLowerCase();
+
+                    const matchesSearch = !term ||
+                        inst.includes(term) ||
+                        document.includes(term);
+
+                    const matchesStatus = !status || row.dataset.status === status;
+                    const matchesDate = isDateInRange(row.dataset.date, date);
+
+                    return matchesSearch && matchesStatus && matchesDate;
+                });
+
+                updateStatistics(filteredRows);
+                currentPage = 1;
+                displayRows();
+            }
+
+            // Display rows with pagination
+            function displayRows() {
+                const perPage = 50;
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
+
+                allRows.forEach(r => r.style.display = 'none');
+                filteredRows.slice(start, end).forEach(r => r.style.display = '');
+            }
+
+            // Verify/Reject button handlers
+            document.querySelectorAll('.verify-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const verificationId = this.getAttribute('data-verification-id');
+                    const verifyForm = document.getElementById('verifyForm');
+                    const verifyVerificationId = document.getElementById('verifyVerificationId');
+                    
+                    // Set the form action to verify endpoint
+                    verifyForm.action = `/super/verify/payment/${verificationId}/`;
+                    // Set the verification ID in hidden field
+                    verifyVerificationId.value = verificationId;
+                });
+            });
+
+            document.querySelectorAll('.reject-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const verificationId = this.getAttribute('data-verification-id');
+                    const rejectForm = document.getElementById('rejectForm');
+                    const rejectVerificationId = document.getElementById('rejectVerificationId');
+                    
+                    // Set the form action to reject endpoint
+                    rejectForm.action = `/super/reject/payment/${verificationId}/`;
+                    // Set the verification ID in hidden field
+                    rejectVerificationId.value = verificationId;
+                });
+            });
+
+            // Details button handler - using actual data from data attribute
+            document.querySelectorAll('.details-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const verificationData = JSON.parse(this.getAttribute('data-verification-data'));
+                    displayVerificationDetails(verificationData);
+                });
+            });
+
+            // Display verification details in modal using actual data
+            function displayVerificationDetails(details) {
+                const detailsModalBody = document.getElementById('detailsModalBody');
+                
+                let statusBadge = '';
+                if (details.status === 'APPROVED') {
+                    statusBadge = '<span class="badge bg-success">Approved</span>';
+                } else if (details.status === 'REJECTED') {
+                    statusBadge = '<span class="badge bg-danger">Rejected</span>';
+                } else {
+                    statusBadge = '<span class="badge bg-warning text-dark">Under Review</span>';
+                }
+
+                // Handle null/empty values
+                const adminName = details.admin || 'Not assigned';
+                const remarks = details.remarks || 'No remarks provided';
+
+                detailsModalBody.innerHTML = `
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <strong>Verification ID:</strong> #${details.id}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Institution:</strong> ${details.institution}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Status:</strong> ${statusBadge}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Document:</strong> 
+                                <a href="${details.document_url}" target="_blank" class="ms-2">
+                                    <i class="bi bi-file-earmark"></i> View Document
+                                </a>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Remarks:</strong>
+                                <div class="mt-1 p-2 bg-dark rounded">${remarks}</div>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Processed By:</strong> ${adminName}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Created At:</strong> ${details.created_at}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Last Updated:</strong> ${details.updated_at}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Event Listeners
+            searchInput.addEventListener('input', filterVerifications);
+            statusFilter.addEventListener('change', filterVerifications);
+            dateFilter.addEventListener('change', filterVerifications);
+
+            // Initial load
+            updateStatistics(allRows);
+            displayRows();
+        });
+
+        // Helper Functions
+        function clearFilters() {
+            document.getElementById('searchVerifications').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('searchVerifications').dispatchEvent(new Event('input'));
+        }
+
+        function refreshPage() {
+            location.reload();
+        }
+    </script>
+{% endblock %}

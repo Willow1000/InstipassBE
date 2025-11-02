@@ -1,0 +1,799 @@
+{% extends "base.html" %}
+{% block title %}Institutions Management{% endblock %}
+{% block content %}
+    {% include "admin_nav.html" %}
+    <style>
+        /* Custom colors for institution types */
+        .text-indigo {
+            color: #6610f2;
+        }
+        .text-purple {
+            color: #6f42c1;
+        }
+        .text-pink {
+            color: #d63384;
+        }
+        .text-teal {
+            color: #20c997;
+        }
+        
+        /* Dark mode styles for this specific page */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                color: #e0e0e0;
+            }
+            
+            .text-muted {
+                color: #a0a0a0 !important;
+            }
+            
+            .card {
+                background-color: #1e1e1e;
+                border-color: #333333;
+            }
+            
+            .card-header {
+                background-color: #2d2d2d !important;
+                border-color: #333333;
+            }
+            
+            .table {
+                color: #e0e0e0;
+            }
+            
+            .table-hover tbody tr:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+            
+            .form-control, .form-select {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #e0e0e0;
+            }
+            
+            .input-group-text {
+                background-color: #2d2d2d;
+                border-color: #444444;
+                color: #a0a0a0;
+            }
+            
+            .btn-outline-secondary {
+                color: #a0a0a0;
+                border-color: #444444;
+            }
+            
+            .btn-outline-secondary:hover {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-primary {
+                color: #3d8bfd;
+                border-color: #3d8bfd;
+            }
+            
+            .btn-outline-primary:hover {
+                background-color: rgba(61, 139, 253, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-danger {
+                color: #dc3545;
+                border-color: #dc3545;
+            }
+            
+            .btn-outline-danger:hover {
+                background-color: rgba(220, 53, 69, 0.2);
+                color: #e0e0e0;
+            }
+            
+            .btn-outline-info {
+                color: #0dcaf0;
+                border-color: #0dcaf0;
+            }
+            
+            .btn-outline-info:hover {
+                background-color: rgba(13, 202, 240, 0.2);
+                color: #e0e0e0;
+            }
+            
+            /* Adjust opacity for better visibility */
+            .bg-opacity-10 {
+                --bs-bg-opacity: 0.2 !important;
+            }
+            
+            /* Ensure table headers are visible */
+            .table-dark {
+                background-color: #2d2d2d;
+            }
+            
+            /* Ensure the close button is visible */
+            .btn-close {
+                filter: invert(1) grayscale(100%) brightness(200%);
+            }
+            
+            /* Custom colors for dark mode */
+            .text-indigo {
+                color: #a370f7 !important;
+            }
+            
+            .text-purple {
+                color: #b76eff !important;
+            }
+            
+            .text-pink {
+                color: #ea77ad !important;
+            }
+            
+            .text-teal {
+                color: #20c997 !important;
+            }
+            
+            /* Institution name links */
+            .institution-name {
+                color: #e0e0e0 !important;
+            }
+            
+            .institution-name:hover {
+                color: #3d8bfd !important;
+            }
+            
+            /* Card shadows */
+            .shadow-sm {
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5) !important;
+            }
+        }
+    </style>
+    <div class="container-fluid py-4">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 mb-1">
+                            <i class="bi bi-university text-primary me-3"></i>Institutions Management
+                        </h1>
+                        <p class="text-muted mb-0">Manage and monitor educational institutions</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary fs-6">Total: {{ institutions|length }}</span>
+             
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if institutions %}
+            <!-- Search and Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Search Institutions</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchInstitutions" 
+                                       placeholder="Search by name, email, region...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Region</label>
+                            <select class="form-select" id="regionFilter">
+                                <option value="">All Regions</option>
+                                {% regroup institutions by region as regions_list %}
+                                {% for region in regions_list %}
+                                    <option value="{{ region.grouper }}">{{ region.grouper }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">County</label>
+                            <select class="form-select" id="countyFilter">
+                                <option value="">All Counties</option>
+                                {% regroup institutions by county as counties_list %}
+                                {% for county in counties_list %}
+                                    <option value="{{ county.grouper }}">{{ county.grouper }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Institution Type</label>
+                            <select class="form-select" id="typeFilter">
+                                <option value="">All Types</option>
+                                <!-- {% regroup institutions by institution_type as types_list %}
+                                {% for type in types_list %}
+                                    <option value="{{ type.grouper }}">{{ type.grouper }}</option>
+                                {% endfor %} -->
+                                <option value="University">University</option>
+                                <option value="College">College</option>
+                                <option value="Polytechnic">Polytechnic</option>
+                                <option value="Institute">Institute</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label text-muted small">Sort By</label>
+                            <select class="form-select" id="sortBy">
+                                <option value="name">Name A-Z</option>
+                                <option value="name-desc">Name Z-A</option>
+                                <option value="region">Region</option>
+                                <option value="type">Institution Type</option>
+                                <option value="id">ID</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                <i class="bi bi-times me-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4 d-flex justify-content-center align-items-center">
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-info bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-landmark text-info fa-2x mb-2"></i>
+                            <h5 class="card-title text-info" id="totalInstitutions">{{ institutions|length }}</h5>
+                            <p class="card-text text-muted small">Total Institutions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-success bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fas fa-layer-group text-success fa-2x mb-2"></i>
+                            <h5 class="card-title text-success" id="uniqueRegions">0</h5>
+                            <p class="card-text text-muted small">Regions Covered</p>
+                        </div>
+                    </div>
+                </div>
+              
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-info bg-opacity-10">
+                        <div class="card-body">
+                            <i class="fa-solid fa-location-pin fa-2x mb-2 text-primary"></i>
+                            <h5 class="card-title text-info" id="uniqueCounties">0</h5>
+                            <p class="card-text text-muted small">Counties covered</p>
+                        </div>
+                    </div>
+                </div>
+                  <div class="col-md-3">
+                    <div class="card text-center border-0 bg-warning bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-globe text-warning fa-2x mb-2"></i>
+                            <h5 class="card-title text-warning" id="withWebsites">0</h5>
+                            <p class="card-text text-muted small">With Websites</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Institution Type Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-indigo bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-building text-indigo fa-2x mb-2"></i>
+                            <h5 class="card-title text-indigo" id="universityCount">0</h5>
+                            <p class="card-text text-muted small">Universities</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-purple bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-building text-purple fa-2x mb-2"></i>
+                            <h5 class="card-title text-purple" id="collegeCount">0</h5>
+                            <p class="card-text text-muted small">Colleges</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-pink bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-building text-pink fa-2x mb-2"></i>
+                            <h5 class="card-title text-pink" id="polytechnicCount">0</h5>
+                            <p class="card-text text-muted small">Polytechnics</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-0 bg-teal bg-opacity-10">
+                        <div class="card-body">
+                            <i class="bi bi-building text-teal fa-2x mb-2"></i>
+                            <h5 class="card-title text-teal" id="instituteCount">0</h5>
+                            <p class="card-text text-muted small">Institutes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Institutions Grid/List View Toggle -->
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark">Institutions Directory</h5>
+                        <div class="d-flex gap-2">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm active" id="listView">
+                                    <i class="bi bi-list"></i> List
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="cardView">
+                                    <i class="bi bi-th"></i> Cards
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- List View -->
+                <div class="card-body p-0" id="listViewContainer">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="institutionsTable">
+                            <thead class="table-dark sticky-top z-2">
+                                <tr>
+                                    <th class="px-3 py-3" style="width: 60px;">
+                                        <small>ID</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 200px;">
+                                        <small>Institution Name</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 120px;">
+                                        <small>Type</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 180px;">
+                                        <small>Contact Info</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 150px;">
+                                        <small>Location</small>
+                                    </th>
+                                    <th class="px-3 py-3" style="width: 180px;">
+                                        <small>Admin Contact</small>
+                                    </th>
+                                    <th class="px-3 py-3 text-center" style="width: 120px;">
+                                        <small>Actions</small>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="institutionsTableBody">
+                                {% for institution in institutions %}
+                                <tr class="institution-row {{ institution.institution_type }}" 
+                                    data-name="{{ institution.name|lower }}"
+                                    data-email="{{ institution.email|lower }}"
+                                    data-region="{{ institution.region|lower }}"
+                                    data-county="{{ institution.county|lower }}"
+                                    data-type="{{ institution.institution_type|lower }}"
+                                    data-website="{% if institution.web_url %}true{% else %}false{% endif %}"
+                                    data-has-email="{% if institution.email %}true{% else %}false{% endif %}">
+                                    
+                                    <td class="px-3 py-3">
+                                        <small class="text-muted">#{{ institution.id }}</small>
+                                    </td>
+                                    
+                                    <td class="px-3 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                                 style="width: 32px; height: 32px; font-size: 12px; overflow: hidden;">
+                                                 {% if institution.logo %}
+                                                 <img src="{{ institution.logo.url }}" alt="{{ institution.name }}" class="w-100 h-100 object-cover">
+                                                 {% else %}
+                                                {{ institution.name|first|upper }}
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <a href="{% url 'institution_admin_detail' institution.id %}" 
+                                                   class="text-decoration-none institution-name fw-medium">
+                                                    {{ institution.name }}
+                                                </a>
+                                                {% if institution.web_url %}
+                                                    <div>
+                                                        <a href="{{ institution.web_url }}" target="_blank" 
+                                                           class="text-muted small text-decoration-none">
+                                                            <i class="bi bi-external-link-alt me-1"></i>Visit Website
+                                                        </a>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-3 py-3">
+                                        <span class="badge bg-secondary">{{ institution.institution_type }}</span>
+                                    </td>
+                                    
+                                    <td class="px-3 py-3">
+                                        <div class="small">
+                                            {% if institution.email %}
+                                                <div class="mb-1">
+                                                    <i class="bi bi-envelope text-muted me-1"></i>
+                                                    <a href="mailto:{{ institution.email }}" class="text-decoration-none">
+                                                        {{ institution.email }}
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                            {% if institution.tel %}
+                                                <div>
+                                                    <i class="bi bi-phone text-muted me-1"></i>
+                                                    <a href="tel:{{ institution.tel }}" class="text-decoration-none">
+                                                        {{ institution.tel }}
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                            {% if not institution.email and not institution.tel %}
+                                                <span class="text-muted">No contact info</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-3 py-3">
+                                        <div class="small">
+                                            <div class="fw-medium">{{ institution.region }}</div>
+                                            <div class="text-muted">{{ institution.county }}</div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-3 py-3">
+                                        <div class="small">
+                                            {% if institution.admin_email %}
+                                                <div class="mb-1">
+                                                    <i class="bi bi-envelope text-muted me-1"></i>
+                                                    <a href="mailto:{{ institution.admin_email }}" class="text-decoration-none">
+                                                        {{ institution.admin_email }}
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                            {% if institution.admin_tell %}
+                                                <div>
+                                                    <i class="bi bi-phone text-muted me-1"></i>
+                                                    <a href="tel:{{ institution.admin_tell }}" class="text-decoration-none">
+                                                        {{ institution.admin_tell }}
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-3 py-3 text-center">
+                                        <div class="btn-group d-flex gap-2">
+                                            <a href="{% url 'institution_admin_detail' institution.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                               
+                                            </a>
+                                            <a href="{% url 'delete_institution' institution.id %}" class="btn btn-sm btn-outline-danger">
+                                             
+                                                    <i class="bi bi-trash"></i>
+   
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Card View (hidden by default) -->
+                <div class="card-body d-none" id="cardViewContainer">
+                    <div class="row g-4" id="institutionsCardGrid">
+                        {% for institution in institutions %}
+                        <div class="col-md-6 col-lg-4 col-xl-3 institution-card"
+                             data-name="{{ institution.name|lower }}"
+                             data-email="{{ institution.email|lower }}"
+                             data-region="{{ institution.region|lower }}"
+                             data-county="{{ institution.county|lower }}"
+                             data-type="{{ institution.institution_type|lower }}"
+                             data-website="{% if institution.web_url %}true{% else %}false{% endif %}"
+                             data-has-email="{% if institution.email %}true{% else %}false{% endif %}">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                             style="width: 40px; height: 40px; font-size: 16px; overflow: hidden;">
+                                             {% if institution.logo %}
+                                             <img src="{{ institution.logo.url }}" alt="{{ institution.name }}" class="w-100 h-100 object-cover">
+                                             {% else %}
+                                            {{ institution.name|first|upper }}
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ institution.name }}</h6>
+                                            <span class="badge bg-secondary">{{ institution.institution_type }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="small mb-3">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="bi bi-map-marker-alt text-muted me-2"></i>
+                                            <span>{{ institution.region }}, {{ institution.county }}</span>
+                                        </div>
+                                        {% if institution.email %}
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="bi bi-envelope text-muted me-2"></i>
+                                            <a href="mailto:{{ institution.email }}" class="text-decoration-none text-truncate">{{ institution.email }}</a>
+                                        </div>
+                                        {% endif %}
+                                        {% if institution.tel %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-phone text-muted me-2"></i>
+                                            <a href="tel:{{ institution.tel }}" class="text-decoration-none">{{ institution.tel }}</a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        {% if institution.web_url %}
+                                        <a href="{{ institution.web_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-external-link-alt me-1"></i>Website
+                                        </a>
+                                        {% else %}
+                                        <span></span>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'institution_admin_detail' institution.id %}" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-eye me-1"></i>Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination Info -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    Showing <span id="showingCount">{{ institutions|length }}</span> of {{ institutions|length }} entries
+                </div>
+                <div id="paginationControls" class="d-flex gap-2">
+                    <!-- Pagination controls would go here -->
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="text-muted">
+                    <i class="bi bi-university fa-4x mb-4 text-secondary"></i>
+                    <h3>No Institutions Found</h3>
+                    <p class="lead">There are no institutions in the system yet.</p>
+                    <a href="{% url 'add_institution' %}" class="btn btn-primary">
+                        <i class="bi bi-plus me-1"></i>Add Institution
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    
+
+    <script>
+        // Initialize statistics
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            attachFilterListeners();
+            setupViewToggle();
+        });
+
+        function updateStatistics() {
+            const rows = document.querySelectorAll('.institution-row');
+            const uniqueRegions = new Set();
+            const uniqueCounties = new Set();
+            let withWebsites = 0;
+            
+            // Institution type counts
+            let universityCount = 0;
+            let collegeCount = 0;
+            let polytechnicCount = 0;
+            let instituteCount = 0;
+            
+            rows.forEach(row => {
+                const region = row.dataset.region;
+                const county = row.dataset.county;
+                const hasWebsite = row.dataset.website === 'true';
+                const type = row.dataset.type.toLowerCase();
+                
+                uniqueRegions.add(region);
+                uniqueCounties.add(county);
+                
+                if (hasWebsite) {
+                    withWebsites++;
+                }
+                
+                if (type.includes('university')) {
+                    universityCount++;
+                } else if (type.includes('college')) {
+                    collegeCount++;
+                } else if (type.includes('polytechnic')) {
+                    polytechnicCount++;
+                } else if (type.includes('institute')) {
+                    instituteCount++;
+                }
+            });
+            
+            document.getElementById('uniqueRegions').textContent = uniqueRegions.size;
+            document.getElementById('uniqueCounties').textContent = uniqueCounties.size;
+            document.getElementById('withWebsites').textContent = withWebsites;
+            
+            document.getElementById('universityCount').textContent = universityCount;
+            document.getElementById('collegeCount').textContent = collegeCount;
+            document.getElementById('polytechnicCount').textContent = polytechnicCount;
+            document.getElementById('instituteCount').textContent = instituteCount;
+        }
+        
+        function attachFilterListeners() {
+            document.getElementById('searchInstitutions').addEventListener('input', filterInstitutions);
+            document.getElementById('regionFilter').addEventListener('change', filterInstitutions);
+            document.getElementById('countyFilter').addEventListener('change', filterInstitutions);
+            document.getElementById('typeFilter').addEventListener('change', filterInstitutions);
+            document.getElementById('sortBy').addEventListener('change', sortInstitutions);
+        }
+        
+        function setupViewToggle() {
+            const listViewBtn = document.getElementById('listView');
+            const cardViewBtn = document.getElementById('cardView');
+            const listViewContainer = document.getElementById('listViewContainer');
+            const cardViewContainer = document.getElementById('cardViewContainer');
+            
+            listViewBtn.addEventListener('click', function() {
+                listViewContainer.classList.remove('d-none');
+                cardViewContainer.classList.add('d-none');
+                listViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+            });
+            
+            cardViewBtn.addEventListener('click', function() {
+                listViewContainer.classList.add('d-none');
+                cardViewContainer.classList.remove('d-none');
+                listViewBtn.classList.remove('active');
+                cardViewBtn.classList.add('active');
+            });
+        }
+        
+        function filterInstitutions() {
+            const searchTerm = document.getElementById('searchInstitutions').value.toLowerCase();
+            const regionFilter = document.getElementById('regionFilter').value.toLowerCase();
+            const countyFilter = document.getElementById('countyFilter').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value.toLowerCase();
+            
+            const rows = document.querySelectorAll('.institution-row');
+            const cards = document.querySelectorAll('.institution-card');
+            let visibleCount = 0;
+            
+            // Filter rows
+            rows.forEach(row => {
+                const name = row.dataset.name;
+                const email = row.dataset.email;
+                const region = row.dataset.region;
+                const county = row.dataset.county;
+                const type = row.dataset.type;
+                
+                const matchesSearch = searchTerm === '' || 
+                                     name.includes(searchTerm) || 
+                                     email.includes(searchTerm) ||
+                                     region.includes(searchTerm) ||
+                                     county.includes(searchTerm);
+                
+                const matchesRegion = regionFilter === '' || region === regionFilter;
+                const matchesCounty = countyFilter === '' || county === countyFilter;
+                const matchesType = typeFilter === '' || type === typeFilter;
+                
+                if (matchesSearch && matchesRegion && matchesCounty && matchesType) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Filter cards
+            cards.forEach(card => {
+                const name = card.dataset.name;
+                const email = card.dataset.email;
+                const region = card.dataset.region;
+                const county = card.dataset.county;
+                const type = card.dataset.type;
+                
+                const matchesSearch = searchTerm === '' || 
+                                     name.includes(searchTerm) || 
+                                     email.includes(searchTerm) ||
+                                     region.includes(searchTerm) ||
+                                     county.includes(searchTerm);
+                
+                const matchesRegion = regionFilter === '' || region === regionFilter;
+                const matchesCounty = countyFilter === '' || county === countyFilter;
+                const matchesType = typeFilter === '' || type === typeFilter;
+                
+                if (matchesSearch && matchesRegion && matchesCounty && matchesType) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('showingCount').textContent = visibleCount;
+        }
+        
+        function sortInstitutions() {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            // Sort rows
+            const tableBody = document.getElementById('institutionsTableBody');
+            const rows = Array.from(tableBody.querySelectorAll('.institution-row'));
+            
+            rows.sort((a, b) => {
+                switch(sortBy) {
+                    case 'name':
+                        return a.dataset.name.localeCompare(b.dataset.name);
+                    case 'name-desc':
+                        return b.dataset.name.localeCompare(a.dataset.name);
+                    case 'region':
+                        return a.dataset.region.localeCompare(b.dataset.region);
+                    case 'type':
+                        return a.dataset.type.localeCompare(b.dataset.type);
+                    case 'id':
+                        return parseInt(a.querySelector('small').textContent.replace('#', '')) - 
+                               parseInt(b.querySelector('small').textContent.replace('#', ''));
+                    default:
+                        return 0;
+                }
+            });
+            
+            rows.forEach(row => tableBody.appendChild(row));
+            
+            // Sort cards
+            const cardGrid = document.getElementById('institutionsCardGrid');
+            const cards = Array.from(cardGrid.querySelectorAll('.institution-card'));
+            
+            cards.sort((a, b) => {
+                switch(sortBy) {
+                    case 'name':
+                        return a.dataset.name.localeCompare(b.dataset.name);
+                    case 'name-desc':
+                        return b.dataset.name.localeCompare(a.dataset.name);
+                    case 'region':
+                        return a.dataset.region.localeCompare(b.dataset.region);
+                    case 'type':
+                        return a.dataset.type.localeCompare(b.dataset.type);
+                    default:
+                        return 0;
+                }
+            });
+            
+            cards.forEach(card => cardGrid.appendChild(card));
+        }
+        
+        function clearFilters() {
+            document.getElementById('searchInstitutions').value = '';
+            document.getElementById('regionFilter').value = '';
+            document.getElementById('countyFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('sortBy').value = 'name';
+            filterInstitutions();
+        }
+        
+
+    </script>
+{% endblock %}
+

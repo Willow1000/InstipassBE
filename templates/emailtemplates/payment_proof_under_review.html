@@ -1,0 +1,63 @@
+{% extends "base_email.html" %}
+
+{% block title %}Payment Proof Under Review - InstiPass{% endblock %}
+
+{% block header %}
+<img src="https://via.placeholder.com/150x60?text=InstiPass" alt="InstiPass Logo" class="email-logo">
+<h1>Payment Proof Under Review</h1>
+{% endblock %}
+
+{% block content %}
+<h2>Hello {{ institution_name|default:"Administrator" }},</h2>
+
+<p>Thank you for submitting your payment proof. We have successfully received your documentation and it is currently under review.</p>
+
+<div class="update-container" style="background-color: #e3f2fd; border: 1px solid #90caf9; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+    <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+    <h3>Payment Proof Status</h3>
+    <p><strong>Status:</strong> Under Review</p>
+    {% if submission_date %}<p><strong>Submitted On:</strong> {{ submission_date }}</p>{% endif %}
+    {% if reference_number %}<p><strong>Reference Number:</strong> {{ reference_number }}</p>{% endif %}
+</div>
+
+<div class="divider"></div>
+
+<div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">⏱️</div>
+        <div>
+            <strong>Review Timeline</strong>
+            <p>Our team will review your payment proof within 24-48 hours. You will receive an email notification once the review is complete.</p>
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: flex-start;">
+        <div style="margin-right: 15px; color: #2A9D8F; font-size: 20px; min-width: 24px; text-align: center;">📧</div>
+        <div>
+            <strong>Stay Updated</strong>
+            <p>We will notify you via email about the verification status. Please check your email regularly for updates.</p>
+        </div>
+    </div>
+</div>
+
+<div class="security-notice">
+    <h4>What Happens Next?</h4>
+    <p>Our finance team is currently verifying your payment proof. Once verified, your institution account will be activated and you'll be able to access all InstiPass features. If we need any additional information, we will contact you directly.</p>
+</div>
+
+<p>If you have any questions or need further assistance, please don't hesitate to contact our support team at <a href="mailto:support@instipass.com" style="color: #2A9D8F;">support@instipass.com</a>.</p>
+
+<p>Best regards,<br>
+The InstiPass Team</p>
+{% endblock %}
+
+{% block extra_styles %}
+.update-container {
+    background-color: #e3f2fd;
+    border: 1px solid #90caf9;
+}
+.security-notice {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+}
+{% endblock %}
