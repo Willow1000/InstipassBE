@@ -78,7 +78,7 @@ def send_signup_link(sender, instance, created, **kwargs):
 @receiver(post_save, sender=InstitutionRegistrationToken, dispatch_uid="send_registration_link")
 def send_registration_link(sender, instance, created, **kwargs):
     
-    if created and instance.role =="institution":
+    if created and instance.user.role =="institution":
 
     # Context for the email template
         context = {

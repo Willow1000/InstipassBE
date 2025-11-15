@@ -311,7 +311,7 @@
             if (window.history.length > 1) {
                 window.history.back();
             } else {
-                window.location.href = \'/\';
+                window.location.href ='../';
             }
         }
 
@@ -332,8 +332,8 @@
 
         // Add click effect to buttons
         document.querySelectorAll('.btn').forEach(button => {
-            button.addEventListener(\'click\', function(e) {
-                const ripple = document.createElement(\'span\');
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
                 const rect = this.getBoundingClientRect();
                 const size = Math.max(rect.width, rect.height);
                 const x = e.clientX - rect.left - size / 2;
@@ -361,7 +361,7 @@
         });
 
         // Add ripple animation
-        const style = document.createElement(\'style\');
+        const style = document.createElement('style');
         style.textContent = `
             @keyframes ripple {
                 to {
