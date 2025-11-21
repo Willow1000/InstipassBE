@@ -291,9 +291,9 @@ class ContactUs(models.Model):
 
         spam_keywords = ["hi", "hello", "test", "hey", "asdf"]
 
-        bug_keywords = ["404", "bug", "crash", "lag", "slow", "not loading"]
+        bug_keywords = ["404", "bug", "crash", "lag", "slow", "not loading","not working"]
 
-        job_keywords = ["cv", "resume", "intern", "job", "hire", "opportunity"]
+        job_keywords = ["cv", "resume", "intern", "job", "hire", "opportunity","resourceful"]
 
         # Categorization logic
         if any(k in text for k in business_keywords):

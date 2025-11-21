@@ -59,34 +59,43 @@ from django.utils import timezone
 class AdminLogin(LoginView):
     template_name = "administrator/admin_login.html"
     redirect_authenticated_user = True
-    form_class=LoginForm
+    form_class = LoginForm
 
     def post(self, request, *args, **kwargs):
         username = request.POST.get("username")
         password = request.POST.get("password")
         otp = request.POST.get("otp")
 
-        # Step 1: Check username + password
+        # Step 1: Validate credentials
         user = authenticate(request, username=username, password=password)
+
         if user and user.is_superuser:
-            # Step 2: Verify OTP
             device = TOTPDevice.objects.filter(user=user).first()
+
+            # Step 2: OTP verification
             if device and device.verify_token(otp):
                 login(request, user)
-                return redirect("institutions_admin")
-            else:
-                return render(request, self.template_name, {
-                    "error": "Invalid OTP",
-                    "username": username
-                })
+
+                # 🧠 THIS handles ?next=
+                return redirect(self.get_success_url())
+
+            return render(request, self.template_name, {
+                "error": "Invalid OTP",
+                "username": username,
+            })
+
         return render(request, self.template_name, {
             "error": "Invalid credentials",
-            "username": username
+            "username": username,
         })
+
+    def get_success_url(self):
+        # Django automatically extracts ?next=
+        return self.get_redirect_url() or reverse("institutions_admin")
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.is_superuser:
-            return redirect("institution_admin")
+            return redirect("institutions_admin")
         return super().dispatch(request, *args, **kwargs)
     
 class LogoutView(LogoutView):
