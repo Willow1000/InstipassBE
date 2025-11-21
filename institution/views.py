@@ -436,7 +436,7 @@ class NotificationsViewSet(viewsets.ModelViewSet):
         if cookie_flag:
             return Response({"detail": "Limit Reached"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         # Block if fingerprint already submitted
-        if (fingerprint and DemoBookingTracker.objects.filter(fingerprint=fingerprint).count() >= 10) or ContactUsTracker.objects.filter(ip_address=ip_address).count() >= 10:
+        if (fingerprint and ContactUsTracker.objects.filter(fingerprint=fingerprint).count() >= 10) or ContactUsTracker.objects.filter(ip_address=ip_address).count() >= 10:
                 
                 response = Response({"detail": "Limit reached"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
                 

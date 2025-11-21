@@ -20,14 +20,14 @@
       <div class="card shadow-sm mb-4 border-0 rounded-3">
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label small text-muted">Search Messages</label>
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
                 <input type="text" class="form-control border-start-0" id="searchMessages" placeholder="Search by name or message content...">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
               <label class="form-label small text-muted">Filter Status</label>
               <select class="form-select" id="statusFilter">
                 <option value="all">All Messages</option>
@@ -35,139 +35,181 @@
                 <option value="read">Read Only</option>
               </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+              <label class="form-label small text-muted">Filter Category</label>
+              <select class="form-select" id="categoryFilter">
+                <option value="all">All Categories</option>
+                <option value="business">Business Inquiry</option>
+                <option value="support">Support</option>
+                <option value="bug">Bug Report</option>
+                <option value="job">Job Request</option>
+                <option value="spam">Spam</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+            <div class="col-md-2">
               <label class="form-label small text-muted">Sort By</label>
               <select class="form-select" id="sortBy">
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
                 <option value="name">Sort by Name</option>
+                <option value="category">Sort by Category</option>
               </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
               <label class="form-label small text-muted">&nbsp;</label>
-              <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
-                <i class="fas fa-undo me-2"></i> Reset Filters
-              </button>
-           
-
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                  <i class="fas fa-undo me-2"></i> Reset Filters
+                </button>
+                <a href="/super/clear/messages" class="w-100">
+                  <button class="btn btn-outline-danger w-100">
+                    <i class="fas fa-trash me-2"></i> Clear All
+                  </button>
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {% if messages %}
-        <!-- Bulk Actions -->
-        <div class="card shadow-sm mb-3 border-0 rounded-3 d-flex justify-content-between flex-row" id="bulkActions" style="display: none;">
-          <div class="card-body py-2 d-flex">
-            <div class="d-flex align-items-center gap-3">
-              <span class="text-muted">Selected: <span id="selectedCount" class="fw-bold">0</span></span>
-               
-              <button class="btn btn-sm btn-success" onclick="markSelectedAsRead()">
-                <i class="fas fa-check me-1"></i> Mark as Read
-              </button>
+        <!-- Category Summary -->
+        <div class="card shadow-sm mb-4 border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-muted mb-3">Messages by Category</h6>
+            <div class="row g-2">
+              {% for category in category_counts %}
+              <div class="col-auto">
+                <span class="badge {{ category.badge_class }} fs-6 py-2 px-3">
+                  {{ category.name }}: {{ category.count }}
+                </span>
+              </div>
+              {% endfor %}
             </div>
           </div>
-          <div class="">
-                <a href="/super/clear/messages">
-                  <button class="btn btn-outline-danger  w-100">
-                   clear all
-                                </button>
-                </a>
-            </div>
         </div>
 
         <!-- Unread Messages Section -->
-        <h5 class="text-dark mb-3 mt-4">
+        <h5 class="text-dark mb-3">
           <i class="fas fa-envelope text-primary me-2"></i>Unread Messages
           <span class="badge bg-primary ms-2" id="unreadMessagesCount">{{ messages|length }}</span>
         </h5>
+        
+        <!-- Unread Messages by Category -->
         <div id="unreadMessagesList">
-          {% for message in messages %}
-            <div class="card shadow-sm mb-3 message-card unread-message border-start border-primary border-3" 
-                 data-read="false"
-                 data-name="{{ message.name|lower }}"
-                 data-email="{{ message.email|lower }}"
-                 data-message="{{ message.message|lower }}"
-                 data-date="{{ message.created_at|date:'Y-m-d H:i:s' }}"
-                 data-id="{{ message.id }}">
-              
-              <div class="card-header bg-transparent border-0 pb-0">
-                <div class="row align-items-center">
-                  <div class="col">
-                    <!-- <div class="form-check">
-                      <input class="form-check-input message-checkbox" type="checkbox" 
-                             value="{{ message.id }}" onchange="updateBulkActions()">
-                      <label class="form-check-label fw-medium">{{ message.name }}</label>
-                    </div> -->
+          {% for category in categories %}
+          <div class="category-section" data-category="{{ category.value }}">
+            <div class="d-flex align-items-center mb-3 mt-4">
+              <h6 class="text-muted mb-0 me-3">
+                <i class="{{ category.icon }} me-2"></i>{{ category.name }}
+              </h6>
+              <span class="badge {{ category.badge_class }} fs-7" id="unread-{{ category.value }}-count">
+                {{ category.unread_count }}
+              </span>
+            </div>
+            <div class="category-messages" id="unread-{{ category.value }}">
+              {% for message in messages %}
+                {% if message.category == category.value %}
+                <div class="card shadow-sm mb-3 message-card unread-message border-start border-primary border-3" 
+                     data-read="false"
+                     data-name="{{ message.name|lower }}"
+                     data-email="{{ message.email|lower }}"
+                     data-message="{{ message.message|lower }}"
+                     data-category="{{ message.category }}"
+                     data-date="{{ message.created_at|date:'Y-m-d H:i:s' }}"
+                     data-id="{{ message.id }}">
+                  
+                  <div class="card-header bg-transparent border-0 pb-0">
+                    <div class="row align-items-center">
+                      <div class="col">
+                        <span class="fw-medium">{{ message.name }}</span>
+                        <span class="badge {{ category.badge_class }} ms-2">{{ category.name }}</span>
+                      </div>
+                      <div class="col-auto">
+                        <span class="badge bg-primary">New</span>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-auto">
-                    <span class="badge bg-primary">New</span>
-                  </div>
-                </div>
-              </div>
 
-              
-                <div class="card-body pt-2">
-                  <div class="row">
-                    <div class="col-md-9">
-                      <div class="d-flex align-items-start gap-3 flex-column">
-                        <div class="flex-shrink-0">
-                          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                               style="width: 40px; height: 40px; font-size: 16px;">
-                            {{ message.name|first|upper }}
+                  <div class="card-body pt-2">
+                    <div class="row">
+                      <div class="col-md-9">
+                        <div class="d-flex align-items-start gap-3 flex-column">
+                          <div class="flex-shrink-0">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width: 40px; height: 40px; font-size: 16px;">
+                              {{ message.name|first|upper }}
+                            </div>
+                            <div class="mb-1 mt-3">
+                                <i class="fas fa-envelope text-muted me-1"></i>
+                                <a href="mailto:{{ message.email }}" class="text-decoration-none">
+                                    {{ message.email }}
+                                </a>
+                            </div>
                           </div>
-                          <div class="mb-1 mt-3">
-                              <i class="fas fa-envelope text-muted me-1"></i>
-                              <a href="mailto:{{ message.email }}" class="text-decoration-none">
-                                  {{ message.email }}
-                              </a>
-                          </div>
-                        </div>
-                        <div class="flex-grow-1">
-                          <div class="message-preview">
-                            <p class="card-text mb-0" style="line-height: 1.5;">
-                              {{ message.message|truncatewords:30 }}
+                          <div class="flex-grow-1">
+                            <div class="message-preview">
+                              <p class="card-text mb-0" style="line-height: 1.5;">
+                                {{ message.message|truncatewords:30 }}
+                                {% if message.message|wordcount > 30 %}
+                                  <button class="btn btn-link p-0 text-primary fw-normal" onclick="toggleFullMessage(this)">
+                                    Show more
+                                  </button>
+                                {% endif %}
+                              </p>
                               {% if message.message|wordcount > 30 %}
-                                <button class="btn btn-link p-0 text-primary fw-normal" onclick="toggleFullMessage(this)">
-                                  Show more
-                                </button>
+                                <div class="full-message" style="display: none;">
+                                  <p class="card-text mt-2" style="white-space: pre-line;">{{ message.message }}</p>
+                                  <button class="btn btn-link p-0 text-primary fw-normal" onclick="toggleFullMessage(this)">
+                                    Show less
+                                  </button>
+                                </div>
                               {% endif %}
-                            </p>
-                            {% if message.message|wordcount > 30 %}
-                              <div class="full-message" style="display: none;">
-                                <p class="card-text mt-2" style="white-space: pre-line;">{{ message.message }}</p>
-                                <button class="btn btn-link p-0 text-primary fw-normal" onclick="toggleFullMessage(this)">
-                                  Show less
-                                </button>
-                              </div>
-                            {% endif %}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-          
-                  <div class="col-md-3 text-md-end">
-                    <small class="text-muted d-block mb-2">
-                      <i class="fas fa-clock me-1"></i>
-                      {{ message.created_at|date:"M d, Y" }} at {{ message.created_at|date:"g:i A" }}
-                    </small>
-                    
-                    <div class="d-flex justify-content-md-end gap-2 mt-2">
+            
+                      <div class="col-md-3 text-md-end">
+                        <small class="text-muted d-block mb-2">
+                          <i class="fas fa-clock me-1"></i>
+                          {{ message.created_at|date:"M d, Y" }} at {{ message.created_at|date:"g:i A" }}
+                        </small>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+                {% endif %}
+              {% endfor %}
             </div>
+          </div>
           {% endfor %}
         </div>
 
         <!-- Read Messages Section -->
-        <h5 class="text-dark mb-3 mt-4">
+        <h5 class="text-dark mb-3 mt-5">
           <i class="fas fa-check-circle text-success me-2"></i>Read Messages
           <span class="badge bg-success ms-2" id="readMessagesCount">0</span>
         </h5>
+        
+        <!-- Read Messages by Category -->
         <div id="readMessagesList">
-          <!-- Read messages will be moved here via JavaScript -->
+          {% for category in categories %}
+          <div class="category-section" data-category="{{ category.value }}">
+            <div class="d-flex align-items-center mb-3 mt-4">
+              <h6 class="text-muted mb-0 me-3">
+                <i class="{{ category.icon }} me-2"></i>{{ category.name }}
+              </h6>
+              <span class="badge {{ category.badge_class }} fs-7" id="read-{{ category.value }}-count">
+                0
+              </span>
+            </div>
+            <div class="category-messages" id="read-{{ category.value }}">
+              <!-- Read messages will be moved here via JavaScript -->
+            </div>
+          </div>
+          {% endfor %}
         </div>
 
         <!-- No results message -->
@@ -194,6 +236,16 @@
 </div>
 
 <script>
+// Category configuration
+const categoryConfig = {
+  business: { name: 'Business Inquiry', icon: 'fas fa-briefcase', badge_class: 'bg-info' },
+  support: { name: 'Support', icon: 'fas fa-headset', badge_class: 'bg-warning' },
+  bug: { name: 'Bug Report', icon: 'fas fa-bug', badge_class: 'bg-danger' },
+  job: { name: 'Job Request', icon: 'fas fa-user-tie', badge_class: 'bg-success' },
+  spam: { name: 'Spam', icon: 'fas fa-ban', badge_class: 'bg-secondary' },
+  general: { name: 'General', icon: 'fas fa-envelope', badge_class: 'bg-primary' }
+};
+
 // Initialize local storage for read messages if not exists
 if (!localStorage.getItem('readMessages')) {
   localStorage.setItem('readMessages', JSON.stringify([]));
@@ -204,16 +256,13 @@ document.addEventListener('DOMContentLoaded', function() {
   applyReadStatusFromStorage();
   updateCounters();
   sortMessages();
+  updateCategoryCounts();
 });
 
 // Apply read status from local storage
 function applyReadStatusFromStorage() {
   const readMessages = JSON.parse(localStorage.getItem('readMessages')) || [];
   const messageCards = document.querySelectorAll('.message-card');
-  // const detailLinks = document.querySelector(".detail-link")
-  // console.log(`Children: ${detailLinks.firstElementChild}`)
-
-
 
   messageCards.forEach(card => {
     const messageId = card.dataset.id;
@@ -228,32 +277,29 @@ function applyReadStatusFromStorage() {
   });
 }
 
-
 // Mark message as read
 function markAsRead(messageCard, updateStorage) {
   const messageId = messageCard.dataset.id;
+  const category = messageCard.dataset.category;
   messageCard.dataset.read = 'true';
   
-  // Move to read messages section
-  document.getElementById('readMessagesList').appendChild(messageCard);
+  // Move to read messages section for the same category
+  const readCategoryContainer = document.getElementById(`read-${category}`);
+  if (readCategoryContainer) {
+    readCategoryContainer.appendChild(messageCard);
+  }
   
   // Apply visual changes
   messageCard.classList.remove('unread-message', 'border-primary', 'border-3');
   messageCard.classList.add('read-message', 'opacity-75');
   
   // Update badge
-  const badge = messageCard.querySelector('.badge');
+  const badge = messageCard.querySelector('.badge.bg-primary');
   if (badge) {
     badge.classList.remove('bg-primary');
     badge.classList.add('bg-success');
     badge.textContent = 'Read';
   }
-  
-  // Check the toggle
-  // const toggle = messageCard.querySelector('.read-toggle');
-  // if (toggle) {
-  //   toggle.checked = true;
-  // }
   
   // Update storage if needed
   if (updateStorage) {
@@ -263,21 +309,9 @@ function markAsRead(messageCard, updateStorage) {
       localStorage.setItem('readMessages', JSON.stringify(readMessages));
     }
   }
+  
+  updateCategoryCounts();
 }
-
-// Mark message as unread
-
-
-//   // Update storage if needed
-//   if (updateStorage) {
-//     const readMessages = JSON.parse(localStorage.getItem('readMessages')) || [];
-//     const index = readMessages.indexOf(messageId.toString());
-//     if (index > -1) {
-//       readMessages.splice(index, 1);
-//       localStorage.setItem('readMessages', JSON.stringify(readMessages));
-//     }
-//   }
-// }
 
 // Update counters
 function updateCounters() {
@@ -289,47 +323,54 @@ function updateCounters() {
   document.getElementById('unreadCount').textContent = unreadMessages;
   document.getElementById('unreadMessagesCount').textContent = unreadMessages;
   document.getElementById('readMessagesCount').textContent = readMessages;
+}
+
+// Update category counts
+function updateCategoryCounts() {
+  const categories = ['business', 'support', 'bug', 'job', 'spam', 'general'];
   
-  // Show/hide sections based on counts
-  const unreadSection = document.querySelector('h5:contains("Unread Messages")');
-  const readSection = document.querySelector('h5:contains("Read Messages")');
-  
-  if (unreadSection && unreadMessages === 0) {
-    unreadSection.style.display = 'none';
-  } else if (unreadSection) {
-    unreadSection.style.display = 'block';
-  }
-  
-  if (readSection && readMessages === 0) {
-    readSection.style.display = 'none';
-  } else if (readSection) {
-    readSection.style.display = 'block';
-  }
+  categories.forEach(category => {
+    const unreadCount = document.querySelectorAll(`#unread-${category} .message-card[data-read="false"]`).length;
+    const readCount = document.querySelectorAll(`#read-${category} .message-card[data-read="true"]`).length;
+    
+    document.getElementById(`unread-${category}-count`).textContent = unreadCount;
+    document.getElementById(`read-${category}-count`).textContent = readCount;
+    
+    // Hide empty category sections
+    const unreadSection = document.querySelector(`#unread-${category}`).parentElement;
+    const readSection = document.querySelector(`#read-${category}`).parentElement;
+    
+    unreadSection.style.display = unreadCount > 0 ? 'block' : 'none';
+    readSection.style.display = readCount > 0 ? 'block' : 'none';
+  });
 }
 
 // Search and filter functionality
 document.getElementById('searchMessages').addEventListener('input', filterMessages);
 document.getElementById('statusFilter').addEventListener('change', filterMessages);
+document.getElementById('categoryFilter').addEventListener('change', filterMessages);
 document.getElementById('sortBy').addEventListener('change', sortMessages);
 
 function filterMessages() {
   const searchTerm = document.getElementById('searchMessages').value.toLowerCase();
   const statusFilter = document.getElementById('statusFilter').value;
+  const categoryFilter = document.getElementById('categoryFilter').value;
   const messages = document.querySelectorAll('.message-card');
   let visibleCount = 0;
 
   messages.forEach(message => {
     const name = message.dataset.name;
     const messageText = message.dataset.message;
+    const category = message.dataset.category;
     const isRead = message.dataset.read === 'true';
     
     const matchesSearch = name.includes(searchTerm) || messageText.includes(searchTerm);
-    
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'read' && isRead) || 
                          (statusFilter === 'unread' && !isRead);
+    const matchesCategory = categoryFilter === 'all' || category === categoryFilter;
     
-    if (matchesSearch && matchesStatus) {
+    if (matchesSearch && matchesStatus && matchesCategory) {
       message.style.display = 'block';
       visibleCount++;
     } else {
@@ -338,20 +379,19 @@ function filterMessages() {
   });
 
   document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+  updateCategoryCounts();
 }
 
 function sortMessages() {
   const sortBy = document.getElementById('sortBy').value;
-  const unreadContainer = document.getElementById('unreadMessagesList');
-  const readContainer = document.getElementById('readMessagesList');
   
-  // Sort unread messages
-  const unreadMessages = Array.from(unreadContainer.querySelectorAll('.message-card'));
-  sortMessageArray(unreadMessages, sortBy).forEach(message => unreadContainer.appendChild(message));
+  // Sort messages within each category section
+  const categorySections = document.querySelectorAll('.category-messages');
   
-  // Sort read messages
-  const readMessages = Array.from(readContainer.querySelectorAll('.message-card'));
-  sortMessageArray(readMessages, sortBy).forEach(message => readContainer.appendChild(message));
+  categorySections.forEach(section => {
+    const messages = Array.from(section.querySelectorAll('.message-card'));
+    sortMessageArray(messages, sortBy).forEach(message => section.appendChild(message));
+  });
 }
 
 function sortMessageArray(messages, sortBy) {
@@ -363,6 +403,8 @@ function sortMessageArray(messages, sortBy) {
         return new Date(a.dataset.date) - new Date(b.dataset.date);
       case 'name':
         return a.dataset.name.localeCompare(b.dataset.name);
+      case 'category':
+        return a.dataset.category.localeCompare(b.dataset.category);
       default:
         return 0;
     }
@@ -372,60 +414,11 @@ function sortMessageArray(messages, sortBy) {
 function clearFilters() {
   document.getElementById('searchMessages').value = '';
   document.getElementById('statusFilter').value = 'all';
+  document.getElementById('categoryFilter').value = 'all';
   document.getElementById('sortBy').value = 'newest';
   filterMessages();
   sortMessages();
 }
-
-// Bulk actions
-// function updateBulkActions() {
-//   const checkboxes = document.querySelectorAll('.message-checkbox:checked');
-//   const bulkActions = document.getElementById('bulkActions');
-//   const selectedCount = document.getElementById('selectedCount');
-  
-//   selectedCount.textContent = checkboxes.length;
-//   bulkActions.style.display = checkboxes.length > 0 ? 'block' : 'none';
-// }
-
-// function markSelectedAsRead() {
-//   const selected = document.querySelectorAll('.message-checkbox:checked');
-//   if (selected.length === 0) return;
-  
-//   selected.forEach(checkbox => {
-//     const messageCard = checkbox.closest('.message-card');
-//     markAsRead(messageCard, true);
-//     checkbox.checked = false;
-//   });
-  
-//   updateBulkActions();
-//   updateCounters();
-// }
-
-// function deleteSelected() {
-//   const selected = document.querySelectorAll('.message-checkbox:checked');
-//   if (selected.length === 0) return;
-  
-//   if (confirm(`Are you sure you want to delete ${selected.length} messages?`)) {
-//     selected.forEach(checkbox => {
-//       const messageCard = checkbox.closest('.message-card');
-//       const messageId = messageCard.dataset.id;
-      
-//       // Remove from storage if it was read
-//       const readMessages = JSON.parse(localStorage.getItem('readMessages')) || [];
-//       const index = readMessages.indexOf(messageId.toString());
-//       if (index > -1) {
-//         readMessages.splice(index, 1);
-//         localStorage.setItem('readMessages', JSON.stringify(readMessages));
-//       }
-      
-//       // Remove from DOM
-//       messageCard.remove();
-//     });
-    
-//     updateBulkActions();
-//     updateCounters();
-//   }
-// }
 
 // Toggle full message view
 function toggleFullMessage(button) {
@@ -481,6 +474,7 @@ document.querySelector = (function(querySelector) {
   transition: all var(--transition-speed) ease;
   border-radius: 0.5rem;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .message-card:hover {
@@ -501,22 +495,14 @@ document.querySelector = (function(querySelector) {
   opacity: 0.9;
 }
 
-.form-check-input:checked {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+.category-section {
+  margin-bottom: 2rem;
 }
 
-.card-header .form-check {
-  margin: 0;
-}
-
-.message-preview {
-  max-height: none;
-  overflow: visible;
-}
-
-.form-check-input.read-toggle {
-  cursor: pointer;
+.category-section h6 {
+  font-weight: 600;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0.5rem;
 }
 
 .badge {

@@ -811,14 +811,69 @@ def send_invoice(request, pk):
     except Exception as e:
         messages.error(request, f"Error sending invoice: {str(e)}")
         return redirect("admin_deficits_view")
-class ContactUsView(LoginRequiredMixin,UserPassesTestMixin,ListView):
+class ContactUsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     template_name = "administrator/admin_contactus.html"
     model = ContactUs
     login_url = reverse_lazy('adminLogin')
     context_object_name = "messages"
+    
     def test_func(self):
-       return self.request.user.is_superuser      
+        return self.request.user.is_superuser
 
+    def get_queryset(self):
+        # Order by newest first by default
+        return ContactUs.objects.all().order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        messages = context['messages']
+        
+        # Get category counts in a single query for better performance
+        from django.db.models import Count
+        category_counts_db = messages.values('category').annotate(count=Count('category'))
+        
+        # Convert to dictionary for easy lookup
+        category_count_dict = {item['category']: item['count'] for item in category_counts_db}
+        
+        # Category configuration
+        categories_config = [
+            {"value": "business", "name": "Business Inquiry", "icon": "fas fa-briefcase", "badge_class": "bg-info"},
+            {"value": "support", "name": "Support", "icon": "fas fa-headset", "badge_class": "bg-warning"},
+            {"value": "bug", "name": "Bug Report", "icon": "fas fa-bug", "badge_class": "bg-danger"},
+            {"value": "job", "name": "Job Request", "icon": "fas fa-user-tie", "badge_class": "bg-success"},
+            {"value": "spam", "name": "Spam", "icon": "fas fa-ban", "badge_class": "bg-secondary"},
+            {"value": "general", "name": "General", "icon": "fas fa-envelope", "badge_class": "bg-primary"},
+        ]
+        
+        # Prepare category counts for summary
+        category_counts = []
+        categories = []
+        
+        for cat in categories_config:
+            count = category_count_dict.get(cat["value"], 0)
+            
+            # For category summary (all categories shown even if 0)
+            category_counts.append({
+                "name": cat["name"],
+                "count": count,
+                "badge_class": cat["badge_class"]
+            })
+            
+            # For template organization (all categories included)
+            categories.append({
+                "value": cat["value"],
+                "name": cat["name"],
+                "icon": cat["icon"],
+                "badge_class": cat["badge_class"],
+                "unread_count": count  # Note: This shows total count, unread will be handled by JavaScript
+            })
+        
+        context['category_counts'] = category_counts
+        context['categories'] = categories
+        
+        return context 
+
+    
 
 class DetailContactUsView(LoginRequiredMixin,UserPassesTestMixin,DetailView):
     model = ContactUs

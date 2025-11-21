@@ -472,6 +472,334 @@ def send_contact_confirmation(sender,instance,created,**kwargs):
     )
     # return sendmail(to = instance.email,subject=subject,context=context,from_email="noreply@instipass.com",template_name=template_name)
 
+# from django.db.models.signals import post_save
+# from django.dispatch import receiver
+# from django.template.loader import render_to_string
+# from django.utils.html import strip_tags
+# from .tasks import send_email  # Your Celery task
+# from .models import Issue, PaymentProofVerification, ContactUs  # Your models
+
+
+# Signal 1: Issue Report Notification
+@receiver(post_save, sender=Issue)
+def notify_admin_issue_reported(sender, instance, created, **kwargs):
+    """
+    Send notification to admin when a new issue is reported
+    """
+    if created:
+        # Determine styling based on issue type
+        issue_type_styles = {
+            'bug': 'danger',
+            'payment': 'warning',
+            'fraud': 'danger',
+            'template': 'warning',
+            'other': 'info'
+        }
+        
+        issue_type_emojis = {
+            'bug': '🐛',
+            'payment': '💳',
+            'fraud': '🚨',
+            'template': '🎨',
+            'other': '📋'
+        }
+        
+        # Map issue types to display names
+        issue_type_display = {
+            'bug': 'Bug Report',
+            'payment': 'Payment Issue', 
+            'fraud': 'Fraud Alert',
+            'template': 'Template Issue',
+            'other': 'Other Issue'
+        }
+        
+        # Map status to display names
+        status_display = {
+            'open': 'Open',
+            'in_progress': 'In Progress',
+            'resolved': 'Resolved',
+            'closed': 'Closed'
+        }
+        
+        context = {
+            'notification_type': 'New Issue Reported',
+            'subject': f'{issue_type_display.get(instance.issue_type, "Issue")}: {instance.institution.name}',
+            'introduction_text': f'A new issue has been reported by {instance.institution.name} that requires your attention.',
+            'emoji': issue_type_emojis.get(instance.issue_type, '📋'),
+            'details_heading': 'Issue Details',
+            'details': {
+                'Institution': instance.institution.name,
+                'Institution Email': instance.institution.email if hasattr(instance.institution, 'email') else 'N/A',
+                'Issue Type': issue_type_display.get(instance.issue_type, 'Other Issue'),
+                'Status': status_display.get(instance.status, 'Open'),
+                'Description': instance.description,
+                'Attachment': 'Yes - View in admin panel' if instance.attachment else 'No attachment',
+                'Reported On': instance.created_at.strftime('%Y-%m-%d at %H:%M:%S'),
+                'Issue ID': f'#ISS-{instance.id}'
+            },
+            'cta_buttons': [
+                {
+                    'url': f'https://127.0.0.1:8000/admin/issues/{instance.id}/',
+                    'text': 'View Issue Details',
+                    'secondary': False
+                },
+                {
+                    'url': f'https://127.0.0.1:8000/admin/issues/{instance.id}/assign/',
+                    'text': 'Assign to Team Member',
+                    'secondary': True
+                },
+                {
+                    'url': f'https://127.0.0.1:8000/admin/institutions/{instance.institution.id}/',
+                    'text': 'View Institution Profile',
+                    'secondary': True
+                }
+            ],
+            'action_items': [
+                {
+                    'icon': '🔍',
+                    'title': 'Investigate Issue',
+                    'description': 'Review the issue details and any attachments. Check system logs if it\'s a technical issue.'
+                },
+                {
+                    'icon': '👤',
+                    'title': 'Assign & Acknowledge',
+                    'description': 'Assign the issue to the appropriate team member and acknowledge receipt to the institution within 2 hours.'
+                },
+                {
+                    'icon': '⏱️',
+                    'title': 'Set Priority',
+                    'description': 'Fraud and payment issues: Immediate action. Bugs: Within 24 hours. Template/Other: Within 48 hours.'
+                },
+                {
+                    'icon': '📊',
+                    'title': 'Track Resolution',
+                    'description': 'Update the issue status as work progresses and notify the institution when resolved.'
+                }
+            ],
+            'important_note': 'Fraud and payment issues require immediate attention. Please escalate critical issues to senior management if needed.',
+            'notification_style': issue_type_styles.get(instance.issue_type, 'info')
+        }
+        
+        subject = f'[InstiPass] New {issue_type_display.get(instance.issue_type, "Issue")} - {instance.institution.name}'
+        template_name = 'emailtemplates/admin_notification.html'
+        html_message = render_to_string(template_name, context)
+        plain_message = strip_tags(html_message)
+        
+        send_email.delay(
+            subject=subject,
+            plain_message=plain_message,
+            receiver=['wilkinsondari7@gmail.com'],  # Admin email(s)
+            html_message=html_message,
+        )
+
+
+# Signal 2: Payment Proof Verification Notification
+@receiver(post_save, sender=PaymentProofVerification)
+def notify_admin_payment_verification(sender, instance, created, **kwargs):
+    """
+    Send notification to admin when a new payment proof is submitted for verification
+    """
+    if created:
+        # Map status to display names
+        status_display = {
+            'pending': 'Pending Verification',
+            'approved': 'Approved',
+            'rejected': 'Rejected'
+        }
+        
+        context = {
+            'notification_type': 'Payment Proof Verification Required',
+            'subject': 'New Payment Proof Submitted',
+            'introduction_text': f'{instance.institution.name} has submitted a payment proof document that requires your verification before their account can be activated.',
+            'emoji': '💳',
+            'details_heading': 'Verification Request',
+            'details': {
+                'Institution Name': instance.institution.name,
+                'Institution Email': instance.institution.email if hasattr(instance.institution, 'email') else 'N/A',
+                'Document': 'Uploaded - View in admin panel',
+                'Status': status_display.get(instance.status, 'Pending Verification'),
+                'Remarks': instance.remarks if instance.remarks else 'No remarks yet',
+                'Submitted On': instance.created_at.strftime('%Y-%m-%d at %H:%M:%S'),
+                'Last Updated': instance.updated_at.strftime('%Y-%m-%d at %H:%M:%S'),
+                'Verification ID': f'#VER-{instance.id}'
+            },
+            'cta_buttons': [
+                {
+                    'url': f'https://127.0.0.1:8000/admin/payment-verifications/{instance.id}/verify/',
+                    'text': 'Review & Verify Payment',
+                    'secondary': False
+                },
+                {
+                    'url': f'https://127.0.0.1:8000/admin/payment-verifications/{instance.id}/',
+                    'text': 'View Full Details',
+                    'secondary': True
+                },
+                {
+                    'url': f'https://127.0.0.1:8000/admin/institutions/{instance.institution.id}/',
+                    'text': 'View Institution Profile',
+                    'secondary': True
+                }
+            ],
+            'action_items': [
+                {
+                    'icon': '📄',
+                    'title': 'Review Document',
+                    'description': 'Download and carefully examine the payment proof document. Verify it contains: transaction reference, amount, date, and payment method.'
+                },
+                {
+                    'icon': '✅',
+                    'title': 'Verify Payment',
+                    'description': 'Check your bank/M-Pesa/payment gateway records to confirm the payment was received and matches the proof document details.'
+                },
+                {
+                    'icon': '📝',
+                    'title': 'Update Status',
+                    'description': 'Approve if verified, or reject with clear remarks explaining why. The institution will be notified of your decision.'
+                },
+                {
+                    'icon': '🔔',
+                    'title': 'Activate Account',
+                    'description': 'Once approved, ensure the institution\'s subscription is activated and they receive access to their dashboard.'
+                }
+            ],
+            'important_note': '⚠️ Please verify this payment within 24 hours. Delayed verifications impact customer satisfaction and may cause institutions to lose trust in our service.',
+            'additional_message': 'If you need to reject this payment proof, please provide detailed remarks explaining what information is missing or incorrect so the institution can resubmit properly.',
+            'notification_style': 'warning'
+        }
+        
+        subject = f'[InstiPass] Payment Verification Required - {instance.institution.name}'
+        template_name = 'emailtemplates/admin_notification.html'
+        html_message = render_to_string(template_name, context)
+        plain_message = strip_tags(html_message)
+        
+        send_email.delay(
+            subject=subject,
+            plain_message=plain_message,
+            receiver=['wilkinsondari7@gmail.com'],  # Admin email(s)
+            html_message=html_message,
+        )
+
+
+# Signal 3: ContactUs Form Submission Notification
+@receiver(post_save, sender=ContactUs)
+def notify_admin_contactus_form(sender, instance, created, **kwargs):
+    """
+    Send notification to admin when a new ContactUs form is submitted
+    """
+    if created:
+        # Map category to appropriate emoji, style, and display name
+        category_config = {
+            'business': {
+                'emoji': '💼', 
+                'style': 'info', 
+                'priority': 'HIGH',
+                'display_name': 'Business Inquiry'
+            },
+            'support': {
+                'emoji': '🆘', 
+                'style': 'warning', 
+                'priority': 'HIGH',
+                'display_name': 'Support Request'
+            },
+            'bug': {
+                'emoji': '🐛', 
+                'style': 'danger', 
+                'priority': 'MEDIUM',
+                'display_name': 'Bug Report'
+            },
+            'job': {
+                'emoji': '💼', 
+                'style': 'info', 
+                'priority': 'LOW',
+                'display_name': 'Job Application'
+            },
+            'spam': {
+                'emoji': '🚫', 
+                'style': 'danger', 
+                'priority': 'IGNORE',
+                'display_name': 'Spam'
+            },
+            'general': {
+                'emoji': '💬', 
+                'style': 'info', 
+                'priority': 'MEDIUM',
+                'display_name': 'General Inquiry'
+            }
+        }
+        
+        config = category_config.get(instance.category, category_config['general'])
+        
+        # Skip notification for spam
+        if instance.category == 'spam':
+            return
+        
+        context = {
+            'notification_type': 'New Contact Request',
+            'subject': f'{config["display_name"]} - {instance.name}',
+            'introduction_text': f'A new {config["display_name"].lower()} has been submitted through the InstiPass contact form. Priority: {config["priority"]}',
+            'emoji': config['emoji'],
+            'details_heading': 'Contact Details',
+            'details': {
+                'Full Name': instance.name,
+                'Email Address': instance.email,
+                'Category': config['display_name'],
+                'Priority Level': config['priority'],
+                'Message': instance.message,
+                'Submitted On': instance.created_at.strftime('%Y-%m-%d at %H:%M:%S') if instance.created_at else 'Just now',
+                'Contact ID': f'#CTU-{instance.id}'
+            },
+            'cta_buttons': [
+                {
+                    'url': f'mailto:{instance.email}?subject=Re: Your InstiPass Inquiry&body=Hi {instance.name},%0D%0A%0D%0AThank you for contacting InstiPass.',
+                    'text': 'Reply via Email',
+                    'secondary': False
+                },
+                {
+                    'url': f'https://127.0.0.1:8000/admin/contactus/{instance.id}/',
+                    'text': 'View in Admin Dashboard',
+                    'secondary': True
+                }
+            ],
+            'action_items': [
+                {
+                    'icon': '⚡',
+                    'title': 'Response Timeline',
+                    'description': 'Business inquiries: 2 hours. Support requests: 4 hours. Bug reports: 24 hours. Job requests: 48 hours. General: 24 hours.'
+                },
+                {
+                    'icon': '📊',
+                    'title': 'Log and Track',
+                    'description': 'Add this contact to your CRM system and track the conversation for proper follow-up and reporting.'
+                },
+                {
+                    'icon': '🎯',
+                    'title': 'Personalize Response',
+                    'description': 'Review the message carefully and provide a tailored response that addresses their specific needs.'
+                },
+                {
+                    'icon': '✅',
+                    'title': 'Mark as Resolved',
+                    'description': 'Update the contact status in the admin panel once you\'ve responded and resolved their inquiry.'
+                }
+            ],
+            'important_note': 'Business and support inquiries are high priority and should be addressed as soon as possible to maintain excellent customer service and conversion rates.',
+            'additional_message': f'This message has been auto-categorized as "{config["display_name"]}" based on content analysis. You can recategorize if needed in the admin panel.',
+            'notification_style': config['style']
+        }
+        
+        subject = f'[InstiPass] {config["priority"]} Priority - {config["display_name"]} from {instance.name}'
+        template_name = 'emailtemplates/admin_notification.html'
+        html_message = render_to_string(template_name, context)
+        plain_message = strip_tags(html_message)
+        
+        # Send to admin(s)
+        send_email.delay(
+            subject=subject,
+            plain_message=plain_message,
+            receiver=['wilkinsondari7@gmail.com'],  # Admin email(s)
+            html_message=html_message,
+        )
+
 def to_google_calendar_format(dt: datetime) -> str:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
@@ -629,7 +957,7 @@ def send_issue_creation_email(sender, instance, created, **kwargs):
                 message = "We have received your issue, expect us to reach out in the next 12-24 hours. We appreciate your patience."
 
             )
-            receiver = [institution_email,admin_email]
+            receiver = [admin_email]
             send_email.delay(
                 subject=subject,
                 plain_message=plain_message,
@@ -669,7 +997,7 @@ def send_issue_resolution_email(sender, instance, created, **kwargs):
                 message = f"We are glad to inform you that your {instance.issue_type} issue has been resolved. Thanks for your patience"
 
             )
-            receiver = [institution_email,admin_email]
+            receiver = [admin_email]
             send_email.delay(
                 subject=subject,
                 plain_message=plain_message,

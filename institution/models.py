@@ -254,13 +254,61 @@ class NewsLetter(models.Model):
         return f"{self.email}"      
 
 class ContactUs(models.Model):
+    CATEGORY_CHOICES = [
+        ("business", "Business Inquiry"),
+        ("support", "Support"),
+        ("bug", "Bug Report"),
+        ("job", "Job Request"),
+        ("spam", "Spam"),
+        ("general", "General"),
+    ]
+
     name = models.CharField(max_length=50)
     email = models.EmailField()
     message = models.CharField(max_length=300)
-    created_at = models.DateTimeField(auto_now_add=True,null=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="general")
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return f"{self.email}"         
+        return f"{self.email}"
+
+    def save(self, *args, **kwargs):
+        self.category = self._auto_categorize(self.message)
+        super().save(*args, **kwargs)
+
+    def _auto_categorize(self, msg: str):
+        text = msg.lower()
+
+        business_keywords = [
+            "pricing", "quote", "institution", "integration", "api",
+            "dashboard", "partnership", "bulk", "id system"
+        ]
+
+        support_keywords = [
+            "can't login", "cant login", "cannot login", "error", "issue",
+            "problem", "help", "reset", "failed"
+        ]
+
+        spam_keywords = ["hi", "hello", "test", "hey", "asdf"]
+
+        bug_keywords = ["404", "bug", "crash", "lag", "slow", "not loading"]
+
+        job_keywords = ["cv", "resume", "intern", "job", "hire", "opportunity"]
+
+        # Categorization logic
+        if any(k in text for k in business_keywords):
+            return "business"
+        if any(k in text for k in support_keywords):
+            return "support"
+        if any(k in text for k in bug_keywords):
+            return "bug"
+        if any(k in text for k in job_keywords):
+            return "job"
+        if (any(k in text for k in spam_keywords)) and len(text) < 20:
+            return "spam"
+
+        return "general"
+      
 
 class DemoBooking(models.Model):
     # Status choices for tracking the demo booking

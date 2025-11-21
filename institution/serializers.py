@@ -12,7 +12,7 @@ class InstitutionSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstitutionSettings
         fields = "__all__"        
-
+ 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notifications
