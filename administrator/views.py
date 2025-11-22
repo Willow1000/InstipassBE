@@ -1072,7 +1072,7 @@ class PaymentView(LoginRequiredMixin,UserPassesTestMixin,ListView):
        return self.request.user.is_superuser  
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['institutions'] = Institution.objects.all()
+        context['institutions'] = [deficit.institution for deficit in Deficits.objects.all() if deficit.amount]
         context['proofs'] = PaymentProofVerification.objects.filter(status="APPROVED").order_by("-created_at")
         return context   
             

@@ -572,8 +572,14 @@ class PaymentAPIView(APIView):
             payment = serializer.save()
             institution = payment.institution
             deficit = Deficits.objects.filter(institution=institution).last()
-            deficit.amount-=payment.amount
-            deficit.save()
+            if deficit:
+                if deficit.amount:
+                    deficit.amount-=payment.amount
+                    deficit.save()
+                else:
+                    return Response({'detail': 'Balance must not be 0.00'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                    return Response({'detail': 'Deficit must exist for payment to be made.'}, status=status.HTTP_400_BAD_REQUEST)        
             # ✅ Log the transaction if user is admin
             if request.user.is_staff or request.user.is_superuser:
                 TransactionsLog.objects.create(
