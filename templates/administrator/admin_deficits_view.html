@@ -138,6 +138,7 @@
                             </thead>
                             <tbody id="deficitsTableBody">
                                 {% for deficit in deficits %}
+                                    {% if deficit.amount %}
                                 <tr class="deficit-row"
                                     data-institution="{{ deficit.institution.name }}"
                                     data-type="{{ deficit.type }}"
@@ -205,6 +206,7 @@
                                         </div>
                                     </td>
                                 </tr>
+                                {% endif %}
                                 {% endfor %}
                             </tbody>
                         </table>

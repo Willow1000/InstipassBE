@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import *
 from django.urls import include
-from django.contrib.auth import views as auth_views
+# from django.contrib.auth import views as auth_vie/ws
 from rest_framework.routers import DefaultRouter
 from institution.views import StudentRegistrationAPIView
 
