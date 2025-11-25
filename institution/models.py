@@ -281,7 +281,7 @@ class ContactUs(models.Model):
 
         business_keywords = [
             "pricing", "quote", "institution", "integration", "api",
-            "dashboard", "partnership", "bulk", "id system"
+            "dashboard", "partnership", "bulk", "id system",'onboard','would like to use','how do i start'
         ]
 
         support_keywords = [

@@ -539,19 +539,19 @@ def notify_admin_issue_reported(sender, instance, created, **kwargs):
             },
             'cta_buttons': [
                 {
-                    'url': f'https://127.0.0.1:8000/admin/issues/{instance.id}/',
+                    'url': f'https://127.0.0.1:8000/super/issues/{instance.id}/',
                     'text': 'View Issue Details',
                     'secondary': False
                 },
                 {
-                    'url': f'https://127.0.0.1:8000/admin/issues/{instance.id}/assign/',
+                    'url': f'https://127.0.0.1:8000/super/issues/{instance.id}/assign/',
                     'text': 'Assign to Team Member',
-                    'secondary': True
+                    'secondary': False
                 },
                 {
-                    'url': f'https://127.0.0.1:8000/admin/institutions/{instance.institution.id}/',
+                    'url': f'https://127.0.0.1:8000/super/institutions/{instance.institution.id}/',
                     'text': 'View Institution Profile',
-                    'secondary': True
+                    'secondary': False
                 }
             ],
             'action_items': [
@@ -625,19 +625,19 @@ def notify_admin_payment_verification(sender, instance, created, **kwargs):
             },
             'cta_buttons': [
                 {
-                    'url': f'https://127.0.0.1:8000/admin/payment-verifications/{instance.id}/verify/',
+                    'url': f'https://127.0.0.1:8000/super/payment-verifications/{instance.id}/verify/',
                     'text': 'Review & Verify Payment',
                     'secondary': False
                 },
                 {
-                    'url': f'https://127.0.0.1:8000/admin/payment-verifications/{instance.id}/',
+                    'url': f'https://127.0.0.1:8000/super/payment-verifications/{instance.id}/',
                     'text': 'View Full Details',
-                    'secondary': True
+                    'secondary': False
                 },
                 {
-                    'url': f'https://127.0.0.1:8000/admin/institutions/{instance.institution.id}/',
+                    'url': f'https://127.0.0.1:8000/super/institutions/{instance.institution.id}/',
                     'text': 'View Institution Profile',
-                    'secondary': True
+                    'secondary': False
                 }
             ],
             'action_items': [
@@ -755,9 +755,9 @@ def notify_admin_contactus_form(sender, instance, created, **kwargs):
                     'secondary': False
                 },
                 {
-                    'url': f'https://127.0.0.1:8000/admin/contactus/{instance.id}/',
+                    'url': f'https://127.0.0.1:8000/super/contactus/{instance.id}/',
                     'text': 'View in Admin Dashboard',
-                    'secondary': True
+                    'secondary': False
                 }
             ],
             'action_items': [
