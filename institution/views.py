@@ -28,7 +28,8 @@ from .models import DemoBooking
 from administrator.models import DemoBookingTracker, ContactUsTracker
 from .utils import *
 from logs.models import AdminActionsLog,TransactionsLog
-
+from .pagination import StudentCursorPagination
+from django.db.models import Q
 import pandas as pd
 import os
 import re
@@ -179,11 +180,35 @@ class InstitutionSettingsAllViewSet(viewsets.ModelViewSet):
 class InstitutionStudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StudentCursorPagination
     http_method_names = ['get']
 
     def get_queryset(self):
+        status = self.request.GET.get('status')
+        name = self.request.GET.get('search')
+        reg = self.request.GET.get('reg_no')
+        print(status)
         institution = get_object_or_404(Institution,email = self.request.user.email)
-        students = Student.objects.filter(institution=institution)
+        if reg:
+            return Student.objects.filter(institution=institution,reg_no__icontains=reg).order_by('-created_at')
+
+        elif status and name:
+            return Student.objects.filter(
+                Q(institution=institution),
+                Q(status=status),
+                Q(first_name=name) | Q(last_name=name)
+            ).order_by('-created_at')
+
+        elif status:
+            return Student.objects.filter(institution=institution,status=status).order_by('-created_at')
+
+        elif name:
+            return Student.objects.filter(
+                Q(institution=institution),
+                Q(first_name__icontains=name) | Q(last_name__icontains=name)
+            ).order_by('-created_at')
+        
+        students = Student.objects.filter(institution=institution).order_by('-created_at')
         return students
 
 class IdProcessStatsAPIView(APIView):

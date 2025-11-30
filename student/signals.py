@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from django.core.handlers.wsgi import WSGIRequest
 from logs.models import AdminActionsLog
 from logs.models import IdprogressLog
-from InstiPass.tasks import send_email,send_sms
+from InstiPass.tasks import send_email #send_sms
 
 
 @receiver(post_save,sender=Student,dispatch_uid = 'notify_student_and_update_process_status')
@@ -196,7 +196,7 @@ def send_application_received_email(instance):
     #     html_message=html_message,
                 
     # )
-    send_sms.delay(recipients=to_number,multi=False,message=f"Hello {student_name}, your application has been received. Stay tuned for more updates.")
+    # send_sms.delay(recipients=to_number,multi=False,message=f"Hello {student_name}, your application has been received. Stay tuned for more updates.")
 
 def send_application_updated_email(instance):
     """

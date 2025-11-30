@@ -13,6 +13,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 
+
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     return x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
@@ -20,14 +21,15 @@ def get_client_ip(request):
 # Create your views here.
 
 class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.all()
+    # queryset = Student.objects.all().order_by('-created_at')
     parser_classes = (MultiPartParser,JSONParser)
     serializer_class = StudentSerializer
-    # permission_classes = [IsAuthenticated]
-    http_method_names = ['get','post']
+    
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['post']
 
     def get_queryset(self):
-        return Student.objects.filter(email = self.request.user.email)
+        return Student.objects.filter(email = self.request.user.email).order_by('-created_at')
 
     @method_decorator(ensure_csrf_cookie)
     def list(self, request):
