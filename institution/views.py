@@ -187,7 +187,7 @@ class InstitutionStudentViewSet(viewsets.ModelViewSet):
         status = self.request.GET.get('status')
         name = self.request.GET.get('search')
         reg = self.request.GET.get('reg_no')
-        print(status)
+
         institution = get_object_or_404(Institution,email = self.request.user.email)
         if reg:
             return Student.objects.filter(institution=institution,reg_no__icontains=reg).order_by('-created_at')
