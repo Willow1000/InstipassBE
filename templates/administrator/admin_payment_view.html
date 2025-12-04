@@ -134,6 +134,7 @@
                                     data-institution="{{ payment.institution.name}}"
                                     data-reference="{{ payment.reference_number }}"
                                     data-amount="{{ payment.amount }}"
+                                    data-method="{{ payment.method }}"
                                     data-currency="{{ payment.currency }}"
                                     data-date="{{ payment.created_at|date:'Y-m-d' }}"
                                     data-created="{{ payment.created_at|date:'Y-m-d H:i:s' }}">
@@ -352,10 +353,16 @@
                 filteredRows = allRows.filter(row => {
                     const inst = (row.dataset.institution || '').toLowerCase();
                     const reference = (row.dataset.reference || '').toLowerCase();
+                    const currency = (row.dataset.currency || '').toLowerCase()
+                    const amount = (row.dataset.amount || '').toLowerCase()
+                    const payment_method = (row.dataset.method || '').toLowerCase()
 
                     const matchesSearch = !term ||
                         inst.includes(term) ||
-                        reference.includes(term);
+                        reference.includes(term) ||
+                        currency.includes(term) ||
+                        amount.includes(term) ||
+                        payment_method.includes(term);
 
                     const matchesDate = isDateInRange(row.dataset.date, date);
 
