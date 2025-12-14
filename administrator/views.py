@@ -304,15 +304,19 @@ def blacklist_manager(request, institution_email):
 def clear_apiaccess_logs(request):
     try:
         deleted_count, _ = APIAccessLog.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} logs.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "APIACCESSLOGS",
-            victim = f"{deleted_count} APIACCESSLOGS"
+        if deleted_count:
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "APIACCESSLOGS",
+                victim = f"{deleted_count} APIACCESSLOGS"
 
-        )
+            )
+            messages.success(request, f"Deleted {deleted_count} logs.")
+            
+        else:
+            messages.warning(request,"Nothing to be cleared") 
         return redirect(referer)
         
     except Exception as e:
@@ -324,15 +328,19 @@ def clear_apiaccess_logs(request):
 def clear_messages(request):
     try:
         deleted_count, _ = ContactUs.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} messages.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "MESSAGES",
-            victim = f"{deleted_count} MESSAGES"
+        if deleted_count:
+            messages.success(request, f"Deleted {deleted_count} messages.")
+            
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "MESSAGES",
+                victim = f"{deleted_count} MESSAGES"
 
-        )
+            )
+        else:
+            messages.warning(request,"Nothing to be cleared")     
         return redirect(referer)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)  
@@ -342,15 +350,19 @@ def clear_messages(request):
 def clear_student_reg_tracker(request):
     try:
         deleted_count, _ = SubmissionTracker.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} logs.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "STUDENTREGISTRATIONTRACKERLOGS",
-            victim = f"{deleted_count} STUDENTREGISTRATIONTRACKERLOGS"
+        if deleted_count:
+            messages.success(request, f"Deleted {deleted_count} logs.")
+            
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "STUDENTREGISTRATIONTRACKERLOGS",
+                victim = f"{deleted_count} STUDENTREGISTRATIONTRACKERLOGS"
 
-        )
+            )
+        else:
+            messages.warning(request,"Nothing to be cleared")     
         return redirect(referer)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -360,15 +372,19 @@ def clear_student_reg_tracker(request):
 def clear_institution_reg_tracker(request):
     try:
         deleted_count, _ = RegistrationTracker.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} logs.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "INSTITUTIONREGISTRATIONTRACKERLOGS",
-            victim = f"{deleted_count} INSTITUTIONREGISTRATIONTRACKERLOGS"
+        if deleted_count:
+            messages.success(request, f"Deleted {deleted_count} logs.")
+            
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "INSTITUTIONREGISTRATIONTRACKERLOGS",
+                victim = f"{deleted_count} INSTITUTIONREGISTRATIONTRACKERLOGS"
 
-        )
+            )
+        else:
+            messages.warning(request,"Nothing to be cleared")         
         return redirect(referer)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)  
@@ -378,15 +394,19 @@ def clear_institution_reg_tracker(request):
 def clear_institution_login_tracker(request):
     try:
         deleted_count, _ = LoginTracker.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} logs.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "INSTITUTIONLOGINTRACKERLOGS",
-            victim = f"{deleted_count} INSTITUTIONLOGINTRACKERLOGS"
+        if deleted_count:
+            messages.success(request, f"Deleted {deleted_count} logs.")
+            
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "INSTITUTIONLOGINTRACKERLOGS",
+                victim = f"{deleted_count} INSTITUTIONLOGINTRACKERLOGS"
 
-        )
+            )
+        else:
+            messages.warning(request,"Nothing to be cleared")    
         return redirect(referer)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)  
@@ -570,15 +590,19 @@ def clear_demobooking(request):
 def clear_signuptracker(request):
     try:
         deleted_count, _ = SignupTracker.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} signuptracker records.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "SIGNUPTRACKER",
-            victim = f"{deleted_count} SIGNUPTRACKERLOGS"
+        if deleted_count:
+            messages.success(request, f"Deleted {deleted_count} signuptracker records.")
+            
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "SIGNUPTRACKER",
+                victim = f"{deleted_count} SIGNUPTRACKERLOGS"
 
-        )
+            )
+        else:
+            messages.warning(request,"Nothing to be cleared")    
         return redirect(referer)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)          
@@ -588,15 +612,19 @@ def clear_signuptracker(request):
 def clear_demobookingtracker(request):
     try:
         deleted_count, _ = DemoBookingTracker.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} demobookingtracker records.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "DEMOBOKINGTRACKER",
-            victim = f"{deleted_count} DEMOBBOKINGTRACKERLOGS"
+        if deleted_count:
+            messages.success(request, f"Deleted {deleted_count} demobookingtracker records.")
+            
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "DEMOBOKINGTRACKER",
+                victim = f"{deleted_count} DEMOBBOKINGTRACKERLOGS"
 
-        )
+            )
+        else:
+            messages.warning(request,"Nothing to be cleared")    
         return redirect(referer)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)  
@@ -606,15 +634,18 @@ def clear_demobookingtracker(request):
 def clear_contactustracker(request):
     try:
         deleted_count, _ = ContactUsTracker.objects.all().delete()
-        messages.success(request, f"Deleted {deleted_count} contactustracker records.")
         referer = request.META.get('HTTP_REFERER') or '/'
-        AdminActionsLog.objects.create(
-            action = "CLEAR",
-            admin = request.user,
-            victim_type = "CONTACTUSTRACKER",
-            victim = f"{deleted_count} CONTACTUSTRACKERLOGS"
+        if deleted_count:
+            messages.success(request, f"Deleted {deleted_count} contactustracker records.")
+            AdminActionsLog.objects.create(
+                action = "CLEAR",
+                admin = request.user,
+                victim_type = "CONTACTUSTRACKER",
+                victim = f"{deleted_count} CONTACTUSTRACKERLOGS"
 
-        )
+            )
+        else:
+            messages.warning(request,"Nothing to be cleared")    
         return redirect(referer)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)      
