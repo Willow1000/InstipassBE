@@ -1,9 +1,10 @@
 from django.db import models
 from institution.models import Institution
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator,MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
-# Create your models here.
+
+
 class Student(models.Model):
     STATUS_CHOICES = (
         ('application_received', "Application has been received"),
@@ -12,7 +13,7 @@ class Student(models.Model):
     )
 
     institution = models.ForeignKey(
-        Institution , on_delete=models.CASCADE, related_name='student_institution'
+        Institution, on_delete=models.CASCADE, related_name='student_institution'
     )
     reg_no = models.CharField(max_length=50)
     first_name = models.CharField(max_length=100)
@@ -21,7 +22,7 @@ class Student(models.Model):
     admission_year = models.IntegerField(
         validators=[
             MinValueValidator(2020), 
-            MaxValueValidator(2025)
+            MaxValueValidator(timezone.now().year)  # Updated to use current year
         ]
     )
     email = models.EmailField(max_length=100, unique=True)
@@ -40,18 +41,24 @@ class Student(models.Model):
                 name='unique_institution_reg_no'
             )
         ]
+        ordering = ['created_at']  # Order by creation date (oldest first)
+        # Use ['-created_at'] for newest first if preferred
 
     def __str__(self):
         return f"{self.institution}:{self.reg_no}"
 
 
 class SubmissionTracker(models.Model):
-    student = models.ForeignKey(Student,on_delete = models.CASCADE,null=True,blank=True)
-    institution = models.ForeignKey(Institution,on_delete=models.CASCADE,blank=True,null=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, blank=True, null=True)
     fingerprint = models.CharField(max_length=64, unique=True, blank=True, null=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['submitted_at']  # Order by submission date
+        verbose_name_plural = "Submission Trackers"
 
     def __str__(self):
         return f"{self.fingerprint} - {self.ip_address} - {self.institution}"

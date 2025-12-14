@@ -113,8 +113,8 @@ class InstituttionsView(LoginRequiredMixin,UserPassesTestMixin,ListView):
         def get_queryset(self):
             query = self.request.GET.get('querry')
             if query:
-                return Institution.objects.filter(name__icontains=query) | Institution.objects.filter(region__icontains=query) | Institution.objects.filter(county__icontains=query)
-            return Institution.objects.all()
+                return Institution.objects.filter(name__icontains=query).order_by('created_at') | Institution.objects.filter(region__icontains=query).order_by('created_at') | Institution.objects.filter(county__icontains=query).order_by('-created_at')
+            return Institution.objects.all().order_by('created_at')
         def test_func(self):
             return self.request.user.is_superuser
         
@@ -195,27 +195,29 @@ class DeleteStudentView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
         next_url = self.request.GET.get('next')
         return next_url 
 
-class StudentsAdminView(LoginRequiredMixin,UserPassesTestMixin,ListView):
+class StudentsAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Student
     template_name = "administrator/admin_student.html"
     login_url = reverse_lazy('adminLogin')
-    def get_context_data(self, **kwargs):
+    context_object_name = "students"
+
+    def get_queryset(self):
         email = self.request.GET.get("q")
-        query = self.request.GET.get('querry')
         institution = Institution.objects.filter(email=email).first()
-       
+        return Student.objects.filter(
+            institution=institution
+        ).order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if Student.objects.filter(institution=institution):    
-            context['students'] = Student.objects.filter(institution=institution)    
-        else:
-            context['no_students'] = True    
-
-   
+        email = self.request.GET.get("q")
+        institution = Institution.objects.filter(email=email).first()
         context["institution"] = institution
-
         return context
+
     def test_func(self):
         return self.request.user.is_superuser
+
 
 class StudentUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
     model=Student

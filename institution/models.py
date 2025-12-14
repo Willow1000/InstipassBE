@@ -3,9 +3,10 @@ from django.core.validators import MinValueValidator,MaxValueValidator
 from accounts.models import User
 from django.utils.timezone import now
 from django.core.validators import FileExtensionValidator
+from django.utils import timezone
 # from accounts.models import User
 
-# Create your models here.
+
 class Institution(models.Model):
     REGION_CHOICES = [
     ("Central", "Central"),
@@ -90,6 +91,10 @@ class Institution(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['created_at']  # Order by creation date (oldest first)
+        # Use ['-created_at'] for newest first
+
     def __str__(self):
         return f"{self.name}"
     
@@ -104,7 +109,7 @@ class InstitutionSettings(models.Model):
     barcode = models.BooleanField(default=True)
     expected_total = models.IntegerField()
     institution = models.OneToOneField(Institution,on_delete=models.CASCADE)  
-    min_admission_year = models.IntegerField(validators=[MinValueValidator(2020),MaxValueValidator(now().year)])
+    min_admission_year = models.IntegerField(validators=[MinValueValidator(2020),MaxValueValidator(timezone.now().year)])
     notification_pref = models.CharField(choices=NOTIFICATION_CHOICES,max_length=100)
     template_front = models.ImageField(upload_to="institution_template",null=True,blank=True)
     template_back = models.ImageField(upload_to="institution_template", null=True,blank=True)
@@ -119,6 +124,9 @@ class InstitutionSettings(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['created_at']
+
     def __str__(self):
         return f"{self.institution}"
 
@@ -131,6 +139,9 @@ class StudentRegistrationToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['created_at']
+
     def __str__(self):
         return f'{self.institution}'
 
@@ -140,6 +151,9 @@ class RegistrationTracker(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['submitted_at']  # Using submitted_at as creation date
 
     def __str__(self):
         return f"{self.fingerprint} - {self.submitted_at}"
@@ -157,6 +171,10 @@ class Notifications(models.Model):
     type = models.CharField(max_length=10,choices=NOTIFICATION_TYPE_CHOICES,null=True,blank=True)
     message = models.CharField(max_length=250)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural = "Notifications"
 
     def __str__(self):
         return f"{self.message} to {self.recipient.email}" 
@@ -176,6 +194,9 @@ class PaymentProofVerification(models.Model):
     remarks = models.CharField(max_length=150,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.institution} {self.updated_at}"
@@ -204,6 +225,9 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True,null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['created_at']
+
     def __str__(self):
         return f"{self.institution} - {self.reference_number}"
 
@@ -215,6 +239,9 @@ class PaymentReceiptDownloadToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        ordering = ['created_at']
+    
     def __str__(self):
         return f"{self.payment}"
 
@@ -225,6 +252,9 @@ class InvoiceDownloadToken(models.Model):
     expiry_date = models.DateTimeField(null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.email} {self.token}"
@@ -243,12 +273,19 @@ class Deficits(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural = "Deficits"
+
     def __str__(self):
         return f"{self.institution}"
 
 class NewsLetter(models.Model):
     email = models.EmailField(unique=True)
     created_at = models.DateTimeField(auto_now_add = True,null=True,blank=True)
+
+    class Meta:
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.email}"      
@@ -268,6 +305,10 @@ class ContactUs(models.Model):
     message = models.CharField(max_length=300)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="general")
     created_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural = "Contact Us"
 
     def __str__(self):
         return f"{self.email}"
@@ -352,13 +393,14 @@ class DemoBooking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text="When the booking was created")
     updated_at = models.DateTimeField(auto_now=True, help_text="When the booking was last updated")
     
+    class Meta:
+        ordering = ['created_at']  # Added ordering by creation date
+        # You can change to ['-created_at'] for newest first if preferred
+        verbose_name = "Demo Booking"
+        verbose_name_plural = "Demo Bookings"
+    
     def __str__(self):
         return f"{self.name} - {self.institution} ({self.date})"
-    
-    class Meta:
-        ordering = ['-date', '-created_at']
-        verbose_name = "Demo Booking"
-        verbose_name_plural = "Demo Bookings"              
 
 
 class Issue(models.Model):
@@ -393,6 +435,9 @@ class Issue(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        ordering = ['created_at']
+
     def __str__(self):
         return f"{self.institution.name} - {self.issue_type} ({self.status})"
 
@@ -402,6 +447,9 @@ class Testimonial(models.Model):
     quote = models.TextField()
     rating = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.institution}"
@@ -414,6 +462,10 @@ class InstitutionMagicLinkToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     expiry_date = models.DateTimeField(null=True,blank=True)
+    
+    class Meta:
+        ordering = ['created_at']
+    
     def __str__(self):
         return f"{self.institution}"        
 
@@ -424,6 +476,8 @@ class LoginTracker(models.Model):
     user_agent = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['submitted_at']  # Using submitted_at as creation date
+
     def __str__(self):
         return f"{self.fingerprint} {self.ip_address}"
-        

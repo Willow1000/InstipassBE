@@ -2,7 +2,8 @@ from django.db import models
 import uuid
 from accounts.models import User
 from Id.models import *
-from institution.models import DemoBooking,Payment
+from institution.models import DemoBooking, Payment
+from django.utils import timezone
 
 # IN PROD STOP USING UUID
 
@@ -22,6 +23,10 @@ class APIAccessLog(models.Model):
     status_code = models.IntegerField(null=True,blank=True)
     ip_address = models.GenericIPAddressField(null=True,blank=True)
     request_timestamp = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)  # Added for consistency
+
+    class Meta:
+        ordering = ['request_timestamp']  # Order by request timestamp
 
     def __str__(self):
         return f"{self.user_id} {self.endpoint} {self.ip_address} {self.status_code}"
@@ -32,6 +37,10 @@ class IdprogressLog(models.Model):
     queued_on = models.DateTimeField(null=True,blank=True)
     started_processing = models.DateTimeField(null=True,blank=True)
     finished_processing = models.DateTimeField(null=True,blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # Added for ordering
+
+    class Meta:
+        ordering = ['created_at']  # Order by creation date
 
     def __str__(self):
         return f"{self.Id}"
@@ -43,6 +52,12 @@ class AdminActionsLog(models.Model):
     victim_type = models.CharField(max_length=40)
     victim = models.CharField(max_length=400)
     timestamp = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)  # Added for consistency
+
+    class Meta:
+        ordering = ['timestamp']  # Order by timestamp
+        verbose_name_plural = "Admin Actions Logs"
+
     def __str__(self):
         return f"{self.admin} {self.action} {self.victim}"
 
@@ -65,6 +80,11 @@ class BlackListLog(models.Model):
     reason_category = models.CharField(max_length=20,choices=REASON_CATEGORY_CHOICES)
     reason_explanation = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)  # Added for consistency
+
+    class Meta:
+        ordering = ['timestamp']  # Order by timestamp
+        verbose_name_plural = "Blacklist Logs"
 
     def __str__(self):
         return f"{self.admin} {self.action} {self.victim}"
@@ -74,6 +94,11 @@ class DemoLogs(models.Model):
     demo = models.ForeignKey(DemoBooking,on_delete=models.CASCADE)
     action = models.CharField(max_length=20)
     timestamp = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)  # Added for consistency
+
+    class Meta:
+        ordering = ['timestamp']  # Order by timestamp
+        verbose_name_plural = "Demo Logs"
 
     def __str__(self):
         return f"{self.demo}"
@@ -104,7 +129,7 @@ class ExportLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-created_at"]  # Already has ordering (newest first)
         verbose_name = "Export Log"
         verbose_name_plural = "Export Logs"
 
@@ -118,7 +143,9 @@ class TransactionsLog(models.Model):
     victim = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.admin} {self.payment}"
+    class Meta:
+        ordering = ['created_at']  # Order by creation date
+        verbose_name_plural = "Transactions Logs"
 
-    
+    def __str__(self):
+        return f"{self.admin} {self.action} {self.victim}"

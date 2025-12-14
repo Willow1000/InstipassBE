@@ -1,6 +1,4 @@
 from django.db import models
-
-from django.db import models
 from django.conf import settings
 
 
@@ -28,10 +26,10 @@ class AdminNotification(models.Model):
     # Track status
     # is_read = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-created_at"]  # Already has ordering (newest first)
         verbose_name = "Admin Notification"
         verbose_name_plural = "Admin Notifications"
 
@@ -49,11 +47,27 @@ class ContactUsTracker(models.Model):
     fingerprint = models.CharField(max_length=64, blank=True, null=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
-    submitted_at = models.DateTimeField(auto_now_add=True) 
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['submitted_at']  # Order by submission date
+        verbose_name = "Contact Us Tracker"
+        verbose_name_plural = "Contact Us Trackers"
+
+    def __str__(self):
+        return f"Contact Us: {self.fingerprint} - {self.submitted_at}"
+
 
 class DemoBookingTracker(models.Model):
     fingerprint = models.CharField(max_length=64, blank=True, null=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
-    submitted_at = models.DateTimeField(auto_now_add=True)            
+    submitted_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['submitted_at']  # Order by submission date
+        verbose_name = "Demo Booking Tracker"
+        verbose_name_plural = "Demo Booking Trackers"
+
+    def __str__(self):
+        return f"Demo Booking: {self.fingerprint} - {self.submitted_at}"
